@@ -1,0 +1,77 @@
+---
+title: Getting Started
+description: Learn how to parse, validate, and format Nigerian phone numbers with phoneng in under 5 minutes.
+---
+
+phoneng is a zero-dependency TypeScript library for handling Nigerian phone numbers. It parses any common input format, validates against the NCC prefix registry, and outputs normalized formats suitable for storage, display, and API integration.
+
+## Why phoneng?
+
+Handling Nigerian phone numbers correctly is surprisingly complex:
+
+- Users enter numbers in many formats: `08031234567`, `+2348031234567`, `234-803-123-4567`
+- You need to store a canonical format but display a readable one
+- Network identification helps route SMS or detect carrier-specific issues
+- Manual regex solutions break on edge cases and are hard to maintain
+
+phoneng solves all of this with a single function call.
+
+## Quick Start
+
+Install the package:
+
+```bash
+npm install phoneng
+```
+
+Parse a phone number:
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+
+if (result.valid) {
+  console.log(result.e164); // +2348031234567
+  console.log(result.national); // 08031234567
+  console.log(result.network); // MTN
+  console.log(result.type); // MOBILE
+}
+```
+
+The `parse` function accepts any reasonable input format and returns a discriminated union. If parsing succeeds, you get all output formats and metadata. If it fails, you get a specific error code explaining what went wrong.
+
+## Input Formats
+
+phoneng accepts all common Nigerian phone number formats:
+
+| Input               | Description                       |
+| ------------------- | --------------------------------- |
+| `08031234567`       | National format with trunk prefix |
+| `8031234567`        | Without trunk prefix              |
+| `+2348031234567`    | E.164 format                      |
+| `2348031234567`     | Compact format                    |
+| `+234 803 123 4567` | International with spaces         |
+| `0803-123-4567`     | With dashes                       |
+
+All of these parse to the same canonical number. Whitespace, dashes, and parentheses are stripped before validation.
+
+## Output Formats
+
+Every successful parse returns five output formats:
+
+| Property        | Example              | Use Case                        |
+| --------------- | -------------------- | ------------------------------- |
+| `e164`          | `+2348031234567`     | SMS APIs, international storage |
+| `national`      | `08031234567`        | Display to Nigerian users       |
+| `international` | `+234 803 123 4567`  | International display           |
+| `compact`       | `2348031234567`      | Paystack, Flutterwave           |
+| `rfc3966`       | `tel:+2348031234567` | Click-to-call links             |
+
+Choose the format that matches your use case. Store `e164` in your database for consistency.
+
+## Next Steps
+
+- [Installation](/docs/installation) for detailed setup including CommonJS, TypeScript, and monorepo configurations
+- [API Reference](/docs/api-reference) for complete documentation of all functions and types
+- [Error Codes](/docs/error-codes) to handle validation failures gracefully
