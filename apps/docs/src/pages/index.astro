@@ -1,0 +1,296 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import { Playground } from '../components/playground/Playground';
+import { CopyButton } from '../components/ui/CopyButton';
+---
+
+<LandingLayout
+  title="Nigerian Phone Number Parser"
+  description="Zero-dependency TypeScript library for parsing, validating, and formatting Nigerian phone numbers. Network detection, E.164 output, and batch processing."
+>
+  <section class="relative min-h-[70vh] sm:min-h-screen flex flex-col justify-center pt-16">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute top-1/4 -right-24 w-[500px] h-[500px] border border-separator/30 rounded-full"></div>
+      <div class="absolute top-1/3 -right-12 w-[300px] h-[300px] border border-separator/20 rounded-full"></div>
+      <div class="absolute -bottom-32 -left-32 w-[400px] h-[400px] border border-separator/20 rounded-full"></div>
+    </div>
+    
+    <div class="relative w-full max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-12 sm:py-20 lg:py-28">
+      <div class="max-w-4xl">
+        <div class="inline-flex items-center gap-3 mb-5 sm:mb-6">
+          <span class="w-2 h-2 rounded-full bg-accent"></span>
+          <span class="font-mono text-[13px] text-accent tracking-wide">v1.0.0</span>
+          <span class="font-mono text-[13px] text-tertiary-label">·</span>
+          <span class="font-mono text-[13px] text-tertiary-label tracking-wide">&lt;1KB gzipped</span>
+        </div>
+        
+        <h1 class="font-display text-[clamp(36px,8vw,96px)] font-bold leading-[0.95] tracking-[-0.04em] text-label mb-5 sm:mb-6">
+          Parse Nigerian<br />
+          <span class="text-accent">phone numbers</span>
+        </h1>
+        
+        <p class="font-display text-[clamp(17px,2.2vw,24px)] text-secondary-label leading-[1.5] max-w-2xl mb-8 sm:mb-10">
+          Zero-dependency TypeScript library with complete network detection, E.164 formatting, and intelligent batch processing.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-14">
+          <a
+            href="/docs/getting-started"
+            class="inline-flex items-center justify-center h-12 sm:h-14 px-7 sm:px-8 font-display text-[15px] sm:text-[16px] font-semibold text-white bg-accent rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+          >
+            Get Started
+          </a>
+          
+          <div class="inline-flex items-center h-12 sm:h-14 px-4 sm:px-5 bg-fill border border-separator rounded-xl">
+            <code class="font-mono text-[14px] sm:text-[15px] text-label flex-1">npm install phoneng</code>
+            <CopyButton text="npm install phoneng" client:load />
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4 sm:gap-8 text-secondary-label">
+          <div class="flex items-center gap-2">
+            <span class="font-display text-[13px] sm:text-[14px]">TypeScript</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-display text-[13px] sm:text-[14px]">Zero deps</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-display text-[13px] sm:text-[14px]">MIT License</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="relative py-24 sm:py-32 lg:py-40 border-t border-separator">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div class="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+        <div>
+          <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Quick Start</p>
+          <h2 class="font-display text-[clamp(32px,5vw,48px)] font-bold tracking-[-0.03em] text-label leading-[1.1] mb-6">
+            Three lines of code
+          </h2>
+          <p class="font-display text-[18px] text-secondary-label leading-[1.7] mb-8">
+            Import, parse, and extract any format. Network detection, validation, and formatting happen automatically.
+          </p>
+          
+          <div class="space-y-4">
+            {[
+              { step: "01", text: "Import the parse function" },
+              { step: "02", text: "Pass any Nigerian phone number format" },
+              { step: "03", text: "Get structured, validated output" }
+            ].map((item) => (
+              <div class="flex items-center gap-4">
+                <span class="font-mono text-[13px] text-tertiary-label">{item.step}</span>
+                <span class="font-display text-[15px] text-label">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div class="relative">
+          <div class="absolute -inset-4 border border-separator/50 rounded-2xl"></div>
+          <div class="relative bg-bg-secondary border border-separator rounded-xl overflow-hidden">
+            <div class="flex items-center gap-2 px-5 py-4 border-b border-separator">
+              <div class="flex gap-2">
+                <div class="w-3 h-3 rounded-full bg-[#ff5f57]"></div>
+                <div class="w-3 h-3 rounded-full bg-[#febc2e]"></div>
+                <div class="w-3 h-3 rounded-full bg-[#28c840]"></div>
+              </div>
+              <span class="ml-4 font-mono text-[12px] text-tertiary-label">example.ts</span>
+            </div>
+            <pre class="p-6 sm:p-8 overflow-x-auto font-mono text-[14px] sm:text-[15px] leading-[2]"><code><span class="text-[#d73a49] dark:text-[#ff7b72]">import</span> {"{"} parse {"}"} <span class="text-[#d73a49] dark:text-[#ff7b72]">from</span> <span class="text-[#032f62] dark:text-[#a5d6ff]">'phoneng'</span>
+
+<span class="text-[#d73a49] dark:text-[#ff7b72]">const</span> result = <span class="text-[#6f42c1] dark:text-[#d2a8ff]">parse</span>(<span class="text-[#032f62] dark:text-[#a5d6ff]">'08031234567'</span>)
+
+<span class="text-[#6a737d] dark:text-[#8b949e]">// result.e164 → '+2348031234567'</span>
+<span class="text-[#6a737d] dark:text-[#8b949e]">// result.network → 'MTN'</span>
+<span class="text-[#6a737d] dark:text-[#8b949e]">// result.type → 'MOBILE'</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-32 lg:py-40 border-t border-separator bg-bg-secondary">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div class="max-w-2xl mb-16 sm:mb-20">
+        <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Capabilities</p>
+        <h2 class="font-display text-[clamp(32px,5vw,48px)] font-bold tracking-[-0.03em] text-label leading-[1.1]">
+          Production-ready features
+        </h2>
+      </div>
+      
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-1 bg-separator rounded-2xl overflow-hidden">
+        {[
+          { 
+            title: "Zero Dependencies",
+            desc: "No external packages required. Self-contained and auditable. Ships under 1KB gzipped.",
+            num: "0"
+          },
+          { 
+            title: "Network Detection",
+            desc: "Automatically identify MTN, Airtel, Glo, and 9mobile from phone number prefixes.",
+            num: "4"
+          },
+          { 
+            title: "TypeScript First",
+            desc: "Complete type definitions with discriminated unions for type-safe error handling.",
+            num: "∞"
+          },
+          { 
+            title: "Batch Processing",
+            desc: "Process arrays efficiently with aggregated statistics and network breakdowns.",
+            num: "N"
+          }
+        ].map((feature) => (
+          <div class="bg-bg p-8 sm:p-10">
+            <span class="font-mono text-[48px] font-light text-separator leading-none">{feature.num}</span>
+            <h3 class="font-display text-[17px] font-semibold text-label mt-6 mb-3">{feature.title}</h3>
+            <p class="font-display text-[15px] text-secondary-label leading-[1.7]">{feature.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-32 lg:py-40 border-t border-separator">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div class="grid lg:grid-cols-2 gap-16 lg:gap-20">
+        <div>
+          <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Supported Inputs</p>
+          <h2 class="font-display text-[clamp(28px,4vw,40px)] font-bold tracking-[-0.02em] text-label leading-[1.15] mb-6">
+            Any format in, structured data out
+          </h2>
+          <p class="font-display text-[17px] text-secondary-label leading-[1.7] mb-8">
+            Pass phone numbers in any common format. The parser normalizes input automatically before validation.
+          </p>
+          
+          <div class="space-y-0">
+            {[
+              { input: "08031234567", desc: "National with trunk" },
+              { input: "+2348031234567", desc: "E.164 format" },
+              { input: "2348031234567", desc: "Compact (no +)" },
+              { input: "+234 803 123 4567", desc: "Spaced international" },
+              { input: "0803-123-4567", desc: "Hyphen separated" },
+              { input: "(0803) 123 4567", desc: "Parentheses" },
+              { input: "234-803-123-4567", desc: "Country code with hyphens" },
+              { input: "  0803 1234567  ", desc: "Whitespace trimmed" }
+            ].map((item) => (
+              <div class="flex items-center justify-between gap-4 py-3 border-b border-separator last:border-0">
+                <code class="font-mono text-[14px] sm:text-[15px] text-label">{item.input}</code>
+                <span class="font-display text-[12px] sm:text-[13px] text-tertiary-label shrink-0">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Parse Result</p>
+          <h2 class="font-display text-[clamp(28px,4vw,40px)] font-bold tracking-[-0.02em] text-label leading-[1.15] mb-6">
+            Complete output from one call
+          </h2>
+          <p class="font-display text-[17px] text-secondary-label leading-[1.7] mb-8">
+            Every parse returns validation status, multiple formats, and carrier metadata in a single typed object.
+          </p>
+          
+          <div class="space-y-0">
+            {[
+              { field: "valid", value: "true", desc: "Validation status" },
+              { field: "e164", value: "+2348031234567", desc: "E.164 standard" },
+              { field: "national", value: "08031234567", desc: "Local display" },
+              { field: "international", value: "+234 803 123 4567", desc: "Formatted" },
+              { field: "compact", value: "2348031234567", desc: "Payment APIs" },
+              { field: "rfc3966", value: "tel:+2348031234567", desc: "URI format" },
+              { field: "prefix", value: "0803", desc: "Carrier prefix" },
+              { field: "network", value: "MTN", desc: "Detected carrier" },
+              { field: "type", value: "MOBILE", desc: "Number type" }
+            ].map((item) => (
+              <div class="flex items-center justify-between gap-4 py-2.5 border-b border-separator last:border-0">
+                <div class="flex items-baseline gap-3 min-w-0">
+                  <code class="font-mono text-[11px] sm:text-[12px] font-semibold text-accent tracking-wide shrink-0">{item.field}</code>
+                  <span class="font-mono text-[13px] sm:text-[14px] text-label truncate">{item.value}</span>
+                </div>
+                <span class="font-display text-[11px] sm:text-[12px] text-tertiary-label hidden sm:block shrink-0">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-32 lg:py-40 border-t border-separator bg-bg-secondary">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div class="max-w-2xl mb-16">
+        <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Network Detection</p>
+        <h2 class="font-display text-[clamp(28px,4vw,40px)] font-bold tracking-[-0.02em] text-label leading-[1.15] mb-6">
+          Automatic carrier identification
+        </h2>
+        <p class="font-display text-[17px] text-secondary-label leading-[1.7]">
+          Every parsed number includes its carrier. Full coverage of all Nigerian mobile operators with accurate prefix mapping.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {[
+          { network: "MTN", prefixes: "0803, 0806, 0813...", logo: "/images/mtn.png" },
+          { network: "Airtel", prefixes: "0802, 0808, 0812...", logo: "/images/airtel.png" },
+          { network: "Glo", prefixes: "0805, 0807, 0815...", logo: "/images/glo.png" },
+          { network: "9mobile", prefixes: "0809, 0817, 0818...", logo: "/images/nine_mobile.png" }
+        ].map((item) => (
+          <div class="p-4 sm:p-5 border border-separator rounded-xl bg-bg">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center mb-3 sm:mb-4 bg-fill overflow-hidden">
+              <img src={item.logo} alt={item.network} class="w-full h-full object-contain p-1" />
+            </div>
+            <h3 class="font-display text-[15px] sm:text-[16px] font-semibold text-label mb-1">{item.network}</h3>
+            <p class="font-mono text-[11px] sm:text-[12px] text-tertiary-label">{item.prefixes}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-32 lg:py-40 border-t border-separator bg-bg-secondary">
+    <div class="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div class="text-center mb-12 sm:mb-16">
+        <p class="font-mono text-[12px] text-accent uppercase tracking-[0.2em] mb-4">Interactive</p>
+        <h2 class="font-display text-[clamp(28px,4vw,40px)] font-bold tracking-[-0.02em] text-label leading-[1.15]">
+          Try it in your browser
+        </h2>
+      </div>
+      
+      <div class="max-w-4xl mx-auto">
+        <Playground client:only="react" />
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-32 lg:py-40 border-t border-separator">
+    <div class="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+      <h2 class="font-display text-[clamp(36px,6vw,64px)] font-bold tracking-[-0.03em] text-label leading-[1.05] mb-6">
+        Start parsing<br />in seconds
+      </h2>
+      <p class="font-display text-[18px] text-secondary-label mb-10 sm:mb-12 max-w-lg mx-auto">
+        Install phoneng and add Nigerian phone number parsing to your application today.
+      </p>
+      
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/docs/getting-started"
+          class="inline-flex items-center justify-center h-14 px-10 font-display text-[16px] font-semibold text-white bg-accent rounded-xl transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+        >
+          Read the Documentation
+        </a>
+        <a
+          href="https://github.com/nicholasgriffintn/phoneng"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center gap-3 h-14 px-8 font-display text-[16px] font-semibold text-label border border-separator rounded-xl transition-all duration-150 hover:bg-fill active:scale-[0.98]"
+        >
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+</LandingLayout>
