@@ -1,0 +1,182 @@
+---
+title: FAQ
+description: Frequently asked questions about phoneng, Nigerian phone number validation, and common implementation concerns.
+---
+
+## General
+
+### Does phoneng make network requests?
+
+No. phoneng is completely offline. The prefix-to-network mapping is compiled into the package as static data. No API calls, no internet connection required.
+
+### What Node.js version is required?
+
+Node.js 18.0.0 or later. phoneng uses no Node.js-specific APIs, so it also works in:
+
+- Deno
+- Bun
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- Cloudflare Workers
+- Vercel Edge Runtime
+- AWS Lambda
+
+### How large is the bundle?
+
+Under 1KB gzipped:
+
+| Format | Size (brotli) |
+| ------ | ------------- |
+| ESM    | ~950 bytes    |
+| CJS    | ~962 bytes    |
+
+phoneng has zero dependencies, so there's nothing else to bundle.
+
+### Does it work in the browser?
+
+Yes. phoneng uses no Node.js APIs and works directly in browser environments:
+
+```html
+<script type="module">
+  import { parse } from "https://esm.sh/phoneng";
+  console.log(parse("08031234567"));
+</script>
+```
+
+## Validation
+
+### Can phoneng detect the current carrier after number portability?
+
+No. phoneng identifies the _original_ network that was allocated the prefix, not the current carrier.
+
+Nigeria introduced Mobile Number Portability (MNP) in 2013. When a user ports their number, the prefix no longer reflects their carrier. For example, an 0803 number (originally MTN) might now be on Airtel.
+
+To get the current carrier, you need a carrier lookup API like Twilio Lookup that queries live databases.
+
+### Does phoneng validate that a number is currently active?
+
+No. phoneng validates format and prefix only. It cannot determine if:
+
+- The number is currently in use
+- The SIM is active
+- The number has been recycled
+
+Validating active status requires a carrier API or sending an actual SMS/call.
+
+### Why does isPossible return true when isValid returns false?
+
+`isPossible` only checks format and length. It answers: "Could this be a valid Nigerian number based on its structure?"
+
+`isValid` also validates the prefix against known operator allocations.
+
+```typescript
+import { isPossible, isValid } from "phoneng";
+
+isPossible("08991234567"); // true (correct format)
+isValid("08991234567"); // false (0899 is not allocated)
+```
+
+Use `isPossible` for:
+
+- Real-time input feedback
+- Quick pre-filtering
+- Progressive validation UX
+
+Use `isValid` for:
+
+- Form submission validation
+- Database storage
+- API requests
+
+### How do I handle landline numbers?
+
+phoneng recognizes some landline prefixes and marks them as `type: 'LANDLINE'`. However, landline number formats vary by region and the prefix database is focused on mobile numbers.
+
+For comprehensive landline validation, consider combining phoneng with region-specific validation logic.
+
+## Data
+
+### Where does the prefix data come from?
+
+The prefix-to-network mapping is based on:
+
+1. Nigerian Communications Commission (NCC) official allocations
+2. Historical operator assignments
+3. Community contributions and corrections
+
+The data is accurate as of January 2024.
+
+### How often is the prefix data updated?
+
+New prefix allocations are added in library updates. Major networks rarely receive new prefixes, so updates are infrequent.
+
+Check the [Changelog](/docs/changelog) for prefix updates.
+
+### What about MVNOs?
+
+phoneng includes allocations for smaller operators:
+
+- **Ntel** (0804) - 4G LTE operator
+- **Smile** (0702) - 4G LTE broadband
+- **MAFAB** (0801) - Newer 5G license holder
+
+These return their operator name rather than the underlying carrier.
+
+## Integration
+
+### Can I use phoneng with React Native?
+
+Yes. phoneng is pure JavaScript with no native dependencies:
+
+```typescript
+import { parse } from "phoneng";
+
+function validatePhone(input: string) {
+  return parse(input);
+}
+```
+
+### Does phoneng support tree shaking?
+
+Yes. phoneng ships as ES modules with proper `exports` configuration. Bundlers like Vite, esbuild, and webpack can tree-shake unused exports.
+
+In practice, phoneng is already so small that tree shaking has minimal impact.
+
+### Is there a Zod schema included?
+
+No. phoneng doesn't include Zod as a dependency to keep the bundle minimal.
+
+Instead, compose your own schema using `isValid` or `parse`:
+
+```typescript
+import { z } from "zod";
+import { isValid } from "phoneng";
+
+const phoneSchema = z.string().refine(isValid, {
+  message: "Invalid Nigerian phone number",
+});
+```
+
+See [Zod Integration](/docs/zod-integration) for more patterns.
+
+## Errors
+
+### What does INVALID_PREFIX mean?
+
+The three-digit prefix (e.g., 803, 701) is not assigned to any Nigerian mobile operator. This could mean:
+
+- The number was entered incorrectly
+- The prefix doesn't exist
+- The prefix is for a service type not in the database
+
+### Why am I getting EMPTY_INPUT for whitespace-only strings?
+
+phoneng trims input before validation. Strings containing only whitespace are treated as empty:
+
+```typescript
+parse("   "); // { valid: false, reason: 'EMPTY_INPUT' }
+parse("\n"); // { valid: false, reason: 'EMPTY_INPUT' }
+```
+
+### How do I handle legacy fixed-line formats?
+
+Some older landline formats may not validate correctly. If you need to support legacy formats, normalize them before passing to phoneng or implement custom preprocessing.
