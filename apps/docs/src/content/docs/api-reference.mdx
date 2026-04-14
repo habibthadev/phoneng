@@ -1,0 +1,229 @@
+---
+title: API Reference
+description: Complete documentation for all phoneng functions and types including parse, parseMany, isValid, and isPossible.
+---
+
+phoneng exports four functions and several TypeScript types. All functions are synchronous and pure with no side effects.
+
+## parse
+
+Parses a phone number string and returns detailed information about it.
+
+```typescript
+function parse(input: string): ParseResult;
+```
+
+### Parameters
+
+| Parameter | Type     | Description               |
+| --------- | -------- | ------------------------- |
+| `input`   | `string` | The phone number to parse |
+
+### Return Type
+
+Returns a discriminated union of `ParseSuccess` or `ParseFailure`:
+
+```typescript
+type ParseResult = ParseSuccess | ParseFailure;
+```
+
+### ParseSuccess
+
+Returned when the input is a valid Nigerian phone number:
+
+```typescript
+type ParseSuccess = {
+  valid: true;
+  e164: string; // +2348031234567
+  national: string; // 08031234567
+  international: string; // +234 803 123 4567
+  compact: string; // 2348031234567
+  rfc3966: string; // tel:+2348031234567
+  prefix: string; // 0803
+  network: Network; // MTN
+  type: NumberType; // MOBILE
+};
+```
+
+### ParseFailure
+
+Returned when parsing fails:
+
+```typescript
+type ParseFailure = {
+  valid: false;
+  reason: ParseErrorCode;
+  input: string;
+};
+```
+
+### Example
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+
+if (result.valid) {
+  console.log(result.e164); // +2348031234567
+  console.log(result.network); // MTN
+} else {
+  console.log(result.reason); // Error code
+  console.log(result.input); // Original input
+}
+```
+
+## parseMany
+
+Parses multiple phone numbers and returns aggregated results.
+
+```typescript
+function parseMany(inputs: string[]): BatchResult;
+```
+
+### Parameters
+
+| Parameter | Type       | Description                     |
+| --------- | ---------- | ------------------------------- |
+| `inputs`  | `string[]` | Array of phone numbers to parse |
+
+### Return Type
+
+```typescript
+type BatchResult = {
+  results: ParseResult[];
+  summary: {
+    total: number;
+    valid: number;
+    invalid: number;
+    byNetwork: Record<Network, number>;
+  };
+};
+```
+
+### Example
+
+```typescript
+import { parseMany } from "phoneng";
+
+const batch = parseMany(["08031234567", "+2347011234567", "invalid"]);
+
+console.log(batch.summary.total); // 3
+console.log(batch.summary.valid); // 2
+console.log(batch.summary.invalid); // 1
+console.log(batch.summary.byNetwork.MTN); // 1
+```
+
+## isValid
+
+Quick validation check without full parsing.
+
+```typescript
+function isValid(input: string): boolean;
+```
+
+### Parameters
+
+| Parameter | Type     | Description                  |
+| --------- | -------- | ---------------------------- |
+| `input`   | `string` | The phone number to validate |
+
+### Return Type
+
+Returns `true` if the input is a valid Nigerian phone number, `false` otherwise.
+
+### Example
+
+```typescript
+import { isValid } from "phoneng";
+
+isValid("08031234567"); // true
+isValid("+2348031234567"); // true
+isValid("not-a-number"); // false
+isValid("08001234567"); // false (0800 is toll-free, not mobile)
+```
+
+### When to Use
+
+Use `isValid` when you only need a boolean result and don't need the parsed output. Internally, it calls `parse` and checks `result.valid`.
+
+## isPossible
+
+Checks if the input could be a valid Nigerian phone number based on format only, without validating the prefix.
+
+```typescript
+function isPossible(input: string): boolean;
+```
+
+### Parameters
+
+| Parameter | Type     | Description               |
+| --------- | -------- | ------------------------- |
+| `input`   | `string` | The phone number to check |
+
+### Return Type
+
+Returns `true` if the input has the correct format and length for a Nigerian phone number.
+
+### Example
+
+```typescript
+import { isPossible } from "phoneng";
+
+isPossible("08031234567"); // true
+isPossible("08991234567"); // true (format OK, but prefix 0899 doesn't exist)
+isPossible("0803123"); // false (too short)
+```
+
+### When to Use
+
+Use `isPossible` for:
+
+- Real-time input validation as users type
+- Quick pre-filtering before expensive operations
+- Progressive validation UX (show "looks valid" before full validation)
+
+## Types
+
+### Network
+
+All supported Nigerian mobile network operators:
+
+```typescript
+type Network =
+  | "MTN"
+  | "AIRTEL"
+  | "GLO"
+  | "NINE_MOBILE"
+  | "NTEL"
+  | "VISAFONE"
+  | "SMILE"
+  | "MAFAB"
+  | "UNKNOWN";
+```
+
+### NumberType
+
+Classification of phone number types:
+
+```typescript
+type NumberType = "MOBILE" | "LANDLINE" | "TOLL_FREE" | "SPECIAL" | "UNKNOWN";
+```
+
+### ParseErrorCode
+
+All possible error codes:
+
+```typescript
+type ParseErrorCode =
+  | "EMPTY_INPUT"
+  | "INVALID_CHARACTERS"
+  | "INVALID_LENGTH"
+  | "INVALID_COUNTRY_CODE"
+  | "INVALID_PREFIX"
+  | "TOO_SHORT"
+  | "TOO_LONG"
+  | "NOT_NIGERIAN";
+```
+
+See [Error Codes](/docs/error-codes) for detailed explanations of each error.
