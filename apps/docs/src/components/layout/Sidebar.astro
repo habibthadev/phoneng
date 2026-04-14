@@ -1,0 +1,195 @@
+---
+import { navigation } from '../../lib/navigation';
+import { MenuIcon, CloseIcon, MobilePhoneIcon } from '../ui/MobileNavIcons';
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+---
+
+<aside
+  class="fixed bottom-0 left-0 top-16 hidden w-64 overflow-y-auto border-r border-separator/50 bg-bg/50 backdrop-blur-sm lg:block"
+>
+  <nav class="p-4" aria-label="Documentation navigation">
+    {
+      navigation.map((section, sectionIndex) => (
+        <div class:list={["mb-8", sectionIndex === 0 && "mt-2"]}>
+          <h2 class="mb-3 px-3 font-mono text-[11px] font-semibold uppercase tracking-widest text-tertiary-label">
+            {section.title}
+          </h2>
+          <ul class="space-y-1">
+            {section.items.map((item) => {
+              const isActive = currentPath === item.href;
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    class:list={[
+                      'group flex h-9 items-center gap-2 rounded-lg px-3 font-display text-[14px] transition-all duration-200',
+                      isActive
+                        ? 'bg-accent text-white font-medium'
+                        : 'text-secondary-label hover:bg-fill hover:text-label',
+                    ]}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <span class:list={[
+                      "flex-1 truncate",
+                      !isActive && "group-hover:translate-x-0.5 transition-transform duration-200"
+                    ]}>
+                      {item.title}
+                    </span>
+                    {item.badge && (
+                      <span
+                        class:list={[
+                          'shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide',
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : item.badge === 'new'
+                              ? 'bg-success/15 text-success'
+                              : 'bg-warning/15 text-warning',
+                        ]}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+</aside>
+
+<div class="lg:hidden">
+  <button
+    type="button"
+    class="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-white transition-transform duration-300 hover:scale-105 active:scale-95"
+    aria-label="Open navigation menu"
+    id="mobile-nav-trigger"
+  >
+    <MenuIcon client:load />
+  </button>
+
+  <div
+    class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+    id="mobile-nav-backdrop"
+    aria-hidden="true"
+  >
+  </div>
+
+  <nav
+    class="fixed bottom-0 left-0 top-0 z-50 hidden w-72 -translate-x-full overflow-y-auto bg-bg border-r border-separator transition-transform duration-300 ease-out"
+    id="mobile-nav"
+    aria-label="Mobile navigation"
+  >
+    <div class="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-separator bg-bg">
+      <div class="flex items-center gap-2.5">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
+          <MobilePhoneIcon client:load />
+        </div>
+        <span class="font-display text-[15px] font-semibold text-label">Documentation</span>
+      </div>
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center rounded-lg text-secondary-label hover:bg-fill hover:text-label transition-colors"
+        aria-label="Close navigation menu"
+        id="mobile-nav-close"
+      >
+        <CloseIcon client:load />
+      </button>
+    </div>
+
+    <div class="p-4">
+      {
+        navigation.map((section) => (
+          <div class="mb-8">
+            <h2 class="mb-3 px-3 font-mono text-[11px] font-semibold uppercase tracking-widest text-tertiary-label">
+              {section.title}
+            </h2>
+            <ul class="space-y-1">
+              {section.items.map((item) => {
+                const isActive = currentPath === item.href;
+                return (
+                  <li>
+                    <a
+                      href={item.href}
+                      class:list={[
+                        'flex h-10 items-center gap-2 rounded-lg px-3 font-display text-[15px] transition-colors',
+                        isActive
+                          ? 'bg-accent text-white font-medium'
+                          : 'text-secondary-label hover:bg-fill hover:text-label active:bg-separator',
+                      ]}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <span class="flex-1 truncate">{item.title}</span>
+                      {item.badge && (
+                        <span
+                          class:list={[
+                            'shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase',
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : item.badge === 'new'
+                                ? 'bg-success/15 text-success'
+                                : 'bg-warning/15 text-warning',
+                          ]}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </nav>
+</div>
+
+<script>
+  const trigger = document.getElementById('mobile-nav-trigger');
+  const close = document.getElementById('mobile-nav-close');
+  const backdrop = document.getElementById('mobile-nav-backdrop');
+  const nav = document.getElementById('mobile-nav');
+
+  function openNav() {
+    if (backdrop && nav) {
+      backdrop.classList.remove('hidden');
+      nav.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        backdrop.style.opacity = '1';
+        nav.classList.remove('-translate-x-full');
+      });
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeNav() {
+    if (backdrop && nav) {
+      nav.classList.add('-translate-x-full');
+      backdrop.style.opacity = '0';
+      setTimeout(() => {
+        backdrop.classList.add('hidden');
+        nav.classList.add('hidden');
+      }, 300);
+      document.body.style.overflow = '';
+    }
+  }
+
+  trigger?.addEventListener('click', openNav);
+  close?.addEventListener('click', closeNav);
+  backdrop?.addEventListener('click', closeNav);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeNav();
+    }
+  });
+</script>
