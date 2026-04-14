@@ -1,0 +1,238 @@
+---
+title: Migration Guide
+description: Migrate to phoneng from other Nigerian phone number validation libraries or custom regex solutions.
+---
+
+This guide helps you migrate from other Nigerian phone number libraries or hand-rolled solutions to phoneng.
+
+## From nigerian-phone-number-validator
+
+The `nigerian-phone-number-validator` package uses a different API structure.
+
+### Before
+
+```typescript
+import NigerianPhoneValidator from "nigerian-phone-number-validator";
+
+const validator = new NigerianPhoneValidator("08031234567");
+
+if (validator.isValid()) {
+  const formatted = validator.getPhoneNumber();
+  const network = validator.getNetwork();
+}
+```
+
+### After
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+
+if (result.valid) {
+  const formatted = result.e164;
+  const network = result.network;
+}
+```
+
+### Key Differences
+
+| Feature        | nigerian-phone-number-validator | phoneng              |
+| -------------- | ------------------------------- | -------------------- |
+| API style      | Class-based                     | Functional           |
+| Return type    | Separate methods                | Single result object |
+| Network naming | Various formats                 | Uppercase constants  |
+| Output formats | Limited                         | Four formats         |
+| TypeScript     | Partial                         | Full support         |
+| Bundle size    | Larger                          | Under 1KB            |
+
+### Network Name Mapping
+
+| nigerian-phone-number-validator | phoneng         |
+| ------------------------------- | --------------- |
+| `"mtn"`                         | `"MTN"`         |
+| `"airtel"`                      | `"AIRTEL"`      |
+| `"glo"`                         | `"GLO"`         |
+| `"etisalat"` or `"9mobile"`     | `"NINE_MOBILE"` |
+
+## From nigeria-phone-number-validator
+
+Similar migration path:
+
+### Before
+
+```typescript
+import { validate, getNetwork } from "nigeria-phone-number-validator";
+
+const isValid = validate("08031234567");
+const network = getNetwork("08031234567");
+```
+
+### After
+
+```typescript
+import { parse, isValid } from "phoneng";
+
+const valid = isValid("08031234567");
+
+const result = parse("08031234567");
+if (result.valid) {
+  const network = result.network;
+}
+```
+
+## From Hand-Rolled Regex
+
+If you're using custom regex patterns:
+
+### Before
+
+```typescript
+const nigerianPhoneRegex = /^(\+234|234|0)[789][01]\d{8}$/;
+
+function validatePhone(phone: string): boolean {
+  return nigerianPhoneRegex.test(phone.replace(/[\s-]/g, ""));
+}
+
+function formatPhone(phone: string): string {
+  const cleaned = phone.replace(/[\s-]/g, "");
+  if (cleaned.startsWith("0")) {
+    return "+234" + cleaned.slice(1);
+  }
+  if (cleaned.startsWith("234")) {
+    return "+" + cleaned;
+  }
+  return cleaned;
+}
+```
+
+### After
+
+```typescript
+import { parse, isValid } from "phoneng";
+
+function validatePhone(phone: string): boolean {
+  return isValid(phone);
+}
+
+function formatPhone(phone: string): string {
+  const result = parse(phone);
+  return result.valid ? result.e164 : phone;
+}
+```
+
+### Why Regex Breaks
+
+Hand-rolled regex solutions often fail on:
+
+1. **Edge cases**: `tel:` prefix, multiple spaces, parentheses
+2. **New prefixes**: NCC allocates new prefixes periodically
+3. **Special numbers**: 0700, 0800, 0900 series
+4. **Validation vs formatting**: Regex validates but doesn't normalize
+
+phoneng handles all of these correctly.
+
+## Migration Checklist
+
+1. **Install phoneng**
+
+```bash
+npm install phoneng
+```
+
+2. **Update imports**
+
+```typescript
+import { parse, parseMany, isValid, isPossible } from "phoneng";
+```
+
+3. **Replace validation calls**
+
+```typescript
+// Old: someValidator.isValid(phone)
+// New: isValid(phone)
+
+// Old: someValidator.validate(phone)
+// New: parse(phone).valid
+```
+
+4. **Update network comparisons**
+
+```typescript
+// Old: network === 'mtn' || network === 'MTN Nigeria'
+// New: result.network === 'MTN'
+```
+
+5. **Replace formatting calls**
+
+```typescript
+// Old: formatPhone(phone, 'E164')
+// New: parse(phone).e164
+
+// Old: formatPhone(phone, 'national')
+// New: parse(phone).national
+```
+
+6. **Update error handling**
+
+```typescript
+// Old: try { validate(phone) } catch (e) { ... }
+// New: const result = parse(phone); if (!result.valid) { ... }
+```
+
+7. **Remove old dependencies**
+
+```bash
+npm uninstall nigerian-phone-number-validator
+npm uninstall nigeria-phone-number-validator
+```
+
+## Batch Processing Migration
+
+If you were validating arrays with loops:
+
+### Before
+
+```typescript
+const results = phoneNumbers.map((phone) => ({
+  phone,
+  valid: validator.isValid(phone),
+  network: validator.getNetwork(phone),
+}));
+
+const validCount = results.filter((r) => r.valid).length;
+```
+
+### After
+
+```typescript
+import { parseMany } from "phoneng";
+
+const batch = parseMany(phoneNumbers);
+
+const validCount = batch.summary.valid;
+const byNetwork = batch.summary.byNetwork;
+```
+
+## TypeScript Migration
+
+If you had custom types:
+
+### Before
+
+```typescript
+type PhoneValidationResult = {
+  isValid: boolean;
+  formatted?: string;
+  network?: string;
+  error?: string;
+};
+```
+
+### After
+
+```typescript
+import type { ParseResult, ParseSuccess, Network } from "phoneng";
+```
+
+Use phoneng's exported types directly rather than maintaining custom types.
