@@ -1,0 +1,241 @@
+---
+title: Batch Processing
+description: Process multiple Nigerian phone numbers at once with parseMany for bulk validation, CSV imports, and aggregated statistics.
+---
+
+The `parseMany` function processes an array of phone numbers and returns individual results plus aggregated statistics. Use it for bulk validation, CSV imports, and generating reports.
+
+## Basic Usage
+
+```typescript
+import { parseMany } from "phoneng";
+
+const numbers = [
+  "08031234567",
+  "+2347011234567",
+  "08051234567",
+  "invalid-input",
+];
+
+const batch = parseMany(numbers);
+```
+
+## BatchResult Structure
+
+```typescript
+type BatchResult = {
+  results: ParseResult[];
+  summary: {
+    total: number;
+    valid: number;
+    invalid: number;
+    byNetwork: Record<Network, number>;
+  };
+};
+```
+
+### results
+
+An array of `ParseResult` objects in the same order as the input. Each result is either a `ParseSuccess` or `ParseFailure`.
+
+```typescript
+batch.results.forEach((result, index) => {
+  if (result.valid) {
+    console.log(`${index}: ${result.e164}`);
+  } else {
+    console.log(`${index}: Invalid - ${result.reason}`);
+  }
+});
+```
+
+### summary
+
+Aggregated statistics for the batch:
+
+```typescript
+console.log(batch.summary.total); // 4
+console.log(batch.summary.valid); // 3
+console.log(batch.summary.invalid); // 1
+console.log(batch.summary.byNetwork.MTN); // 1
+console.log(batch.summary.byNetwork.AIRTEL); // 1
+console.log(batch.summary.byNetwork.GLO); // 1
+```
+
+## Use Cases
+
+### CSV Import
+
+Parse phone numbers from a CSV file:
+
+```typescript
+import { parseMany } from "phoneng";
+import { parse as parseCSV } from "csv-parse/sync";
+import { readFileSync } from "node:fs";
+
+const csv = readFileSync("contacts.csv", "utf-8");
+const records = parseCSV(csv, { columns: true });
+
+const phoneNumbers = records.map((r) => r.phone);
+const batch = parseMany(phoneNumbers);
+
+console.log(`Valid: ${batch.summary.valid}/${batch.summary.total}`);
+```
+
+### Form with Multiple Numbers
+
+Validate multiple phone fields in a single form:
+
+```typescript
+import { parseMany } from "phoneng";
+
+function validateContactForm(form: {
+  primaryPhone: string;
+  secondaryPhone?: string;
+  emergencyContact?: string;
+}) {
+  const phones = [
+    form.primaryPhone,
+    form.secondaryPhone,
+    form.emergencyContact,
+  ].filter((p): p is string => Boolean(p));
+
+  const batch = parseMany(phones);
+
+  if (batch.summary.invalid > 0) {
+    const invalidIndices = batch.results
+      .map((r, i) => (!r.valid ? i : -1))
+      .filter((i) => i >= 0);
+
+    return { valid: false, invalidFields: invalidIndices };
+  }
+
+  return {
+    valid: true,
+    normalized: batch.results.filter((r) => r.valid).map((r) => r.e164),
+  };
+}
+```
+
+### Admin Dashboard
+
+Generate a report of phone numbers by network:
+
+```typescript
+import { parseMany } from "phoneng";
+
+function generateNetworkReport(phoneNumbers: string[]) {
+  const batch = parseMany(phoneNumbers);
+  const { byNetwork, valid, invalid, total } = batch.summary;
+
+  return {
+    total,
+    validPercentage: ((valid / total) * 100).toFixed(1),
+    invalidCount: invalid,
+    networkDistribution: Object.entries(byNetwork)
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([network, count]) => ({
+        network,
+        count,
+        percentage: ((count / valid) * 100).toFixed(1),
+      })),
+  };
+}
+```
+
+### Bulk SMS Preparation
+
+Validate and format numbers for an SMS campaign:
+
+```typescript
+import { parseMany } from "phoneng";
+
+function prepareSMSCampaign(phoneNumbers: string[]) {
+  const batch = parseMany(phoneNumbers);
+
+  const validRecipients = batch.results
+    .filter((r) => r.valid)
+    .map((r) => ({
+      e164: r.e164,
+      network: r.network,
+    }));
+
+  const invalidNumbers = batch.results
+    .filter((r) => !r.valid)
+    .map((r) => ({
+      input: r.input,
+      reason: r.reason,
+    }));
+
+  return {
+    recipients: validRecipients,
+    rejected: invalidNumbers,
+    summary: {
+      ready: validRecipients.length,
+      rejected: invalidNumbers.length,
+    },
+  };
+}
+```
+
+## Performance Considerations
+
+`parseMany` is a synchronous function that processes numbers sequentially. For typical batch sizes (hundreds to thousands), this is fast enough.
+
+For very large batches (10,000+ numbers), consider:
+
+1. **Chunking**: Process in smaller batches to avoid blocking the event loop
+
+```typescript
+async function processLargeBatch(numbers: string[], chunkSize = 1000) {
+  const results: ParseResult[] = [];
+
+  for (let i = 0; i < numbers.length; i += chunkSize) {
+    const chunk = numbers.slice(i, i + chunkSize);
+    const batch = parseMany(chunk);
+    results.push(...batch.results);
+
+    // Yield to event loop
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  return results;
+}
+```
+
+2. **Web Workers**: Offload parsing to a worker thread in browser environments
+
+3. **Worker Threads**: Use Node.js worker threads for CPU-bound processing
+
+## Extracting Valid Numbers
+
+Filter to get only valid results:
+
+```typescript
+import { parseMany, type ParseSuccess } from "phoneng";
+
+const batch = parseMany(phoneNumbers);
+
+const validNumbers: ParseSuccess[] = batch.results.filter(
+  (r): r is ParseSuccess => r.valid,
+);
+
+const e164Numbers = validNumbers.map((r) => r.e164);
+```
+
+## Combining with Zod
+
+Validate an array of phone numbers with Zod:
+
+```typescript
+import { z } from "zod";
+import { parseMany } from "phoneng";
+
+const phoneArraySchema = z.array(z.string()).transform((numbers) => {
+  const batch = parseMany(numbers);
+  return {
+    valid: batch.results.filter((r) => r.valid).map((r) => r.e164),
+    invalid: batch.results.filter((r) => !r.valid).map((r) => r.input),
+  };
+});
+```
