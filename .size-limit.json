@@ -1,0 +1,12 @@
+[
+  {
+    "name": "CJS Bundle",
+    "path": "packages/phoneng/dist/index.cjs",
+    "limit": "10 KB"
+  },
+  {
+    "name": "ESM Bundle",
+    "path": "packages/phoneng/dist/index.js",
+    "limit": "8 KB"
+  }
+]
