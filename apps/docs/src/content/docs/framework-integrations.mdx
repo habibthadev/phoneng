@@ -1,0 +1,330 @@
+---
+title: Framework Integrations
+description: Use phoneng with Hono, Express, and Next.js for validating phone numbers in API routes and server actions.
+---
+
+phoneng works with any JavaScript framework. These examples show common patterns for API routes and server actions.
+
+## Hono
+
+### Route Handler
+
+```typescript
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const app = new Hono();
+
+const schema = z.object({
+  phone: z.string().transform((val, ctx) => {
+    const result = parse(val);
+    if (!result.valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.reason,
+      });
+      return z.NEVER;
+    }
+    return result;
+  }),
+});
+
+app.post("/api/verify-phone", zValidator("json", schema), async (c) => {
+  const { phone } = c.req.valid("json");
+
+  return c.json({
+    success: true,
+    data: {
+      e164: phone.e164,
+      network: phone.network,
+      type: phone.type,
+    },
+  });
+});
+
+export default app;
+```
+
+### Middleware
+
+Create reusable middleware for phone validation:
+
+```typescript
+import { createMiddleware } from "hono/factory";
+import { parse, type ParseSuccess } from "phoneng";
+
+type PhoneEnv = {
+  Variables: {
+    phone: ParseSuccess;
+  };
+};
+
+export const validatePhone = (field: string) =>
+  createMiddleware<PhoneEnv>(async (c, next) => {
+    const body = await c.req.json();
+    const result = parse(body[field]);
+
+    if (!result.valid) {
+      return c.json({ error: `Invalid phone: ${result.reason}` }, 400);
+    }
+
+    c.set("phone", result);
+    await next();
+  });
+
+app.post("/api/send-otp", validatePhone("phone"), async (c) => {
+  const phone = c.get("phone");
+  await sendOTP(phone.e164);
+  return c.json({ success: true });
+});
+```
+
+## Express
+
+### Route Handler
+
+```typescript
+import express from "express";
+import { parse } from "phoneng";
+
+const app = express();
+app.use(express.json());
+
+app.post("/api/verify-phone", (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone || typeof phone !== "string") {
+    return res.status(400).json({ error: "Phone number is required" });
+  }
+
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return res.status(400).json({
+      error: "Invalid phone number",
+      code: result.reason,
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      e164: result.e164,
+      national: result.national,
+      network: result.network,
+      type: result.type,
+    },
+  });
+});
+```
+
+### Middleware
+
+```typescript
+import { Request, Response, NextFunction } from "express";
+import { parse, type ParseSuccess } from "phoneng";
+
+declare global {
+  namespace Express {
+    interface Request {
+      parsedPhone?: ParseSuccess;
+    }
+  }
+}
+
+export function validatePhone(field: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const value = req.body[field];
+
+    if (!value) {
+      return res.status(400).json({ error: `${field} is required` });
+    }
+
+    const result = parse(value);
+
+    if (!result.valid) {
+      return res.status(400).json({
+        error: `Invalid ${field}`,
+        code: result.reason,
+      });
+    }
+
+    req.parsedPhone = result;
+    next();
+  };
+}
+
+app.post("/api/register", validatePhone("phone"), (req, res) => {
+  const phone = req.parsedPhone;
+  res.json({ e164: phone.e164 });
+});
+```
+
+## Next.js App Router
+
+### Route Handler
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { parse } from "phoneng";
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { phone } = body;
+
+  if (!phone || typeof phone !== "string") {
+    return NextResponse.json(
+      { error: "Phone number is required" },
+      { status: 400 },
+    );
+  }
+
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return NextResponse.json(
+      { error: "Invalid phone number", code: result.reason },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      e164: result.e164,
+      network: result.network,
+    },
+  });
+}
+```
+
+### Server Action
+
+```typescript
+"use server";
+
+import { parse, type ParseResult } from "phoneng";
+
+type ActionResult =
+  | { success: true; e164: string; network: string }
+  | { success: false; error: string };
+
+export async function verifyPhone(formData: FormData): Promise<ActionResult> {
+  const phone = formData.get("phone");
+
+  if (!phone || typeof phone !== "string") {
+    return { success: false, error: "Phone number is required" };
+  }
+
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return { success: false, error: result.reason };
+  }
+
+  return {
+    success: true,
+    e164: result.e164,
+    network: result.network,
+  };
+}
+```
+
+### Client Component with Server Action
+
+```tsx
+"use client";
+
+import { useActionState } from "react";
+import { verifyPhone } from "./actions";
+
+export function PhoneForm() {
+  const [state, action, pending] = useActionState(verifyPhone, null);
+
+  return (
+    <form action={action}>
+      <input type="tel" name="phone" placeholder="08031234567" required />
+      <button type="submit" disabled={pending}>
+        {pending ? "Verifying..." : "Verify"}
+      </button>
+
+      {state && !state.success && <p className="error">{state.error}</p>}
+
+      {state && state.success && (
+        <p className="success">
+          Valid {state.network} number: {state.e164}
+        </p>
+      )}
+    </form>
+  );
+}
+```
+
+## Fastify
+
+```typescript
+import Fastify from "fastify";
+import { parse } from "phoneng";
+
+const fastify = Fastify();
+
+fastify.post("/api/verify-phone", async (request, reply) => {
+  const { phone } = request.body as { phone?: string };
+
+  if (!phone) {
+    return reply.status(400).send({ error: "Phone required" });
+  }
+
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return reply.status(400).send({
+      error: "Invalid phone number",
+      code: result.reason,
+    });
+  }
+
+  return {
+    success: true,
+    data: {
+      e164: result.e164,
+      network: result.network,
+    },
+  };
+});
+```
+
+## tRPC
+
+```typescript
+import { initTRPC, TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const t = initTRPC.create();
+
+const nigerianPhone = z.string().transform((val, ctx) => {
+  const result = parse(val);
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: result.reason,
+    });
+    return z.NEVER;
+  }
+  return result;
+});
+
+export const appRouter = t.router({
+  verifyPhone: t.procedure
+    .input(z.object({ phone: nigerianPhone }))
+    .mutation(async ({ input }) => {
+      return {
+        e164: input.phone.e164,
+        network: input.phone.network,
+      };
+    }),
+});
+```
