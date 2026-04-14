@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter phoneng build && pnpm --filter docs build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "apps/docs/.vercel/output",
+  "framework": null
+}
