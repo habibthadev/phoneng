@@ -1,0 +1,321 @@
+---
+title: Zod Integration
+description: Combine phoneng with Zod for type-safe schema validation at API boundaries, forms, and data processing pipelines.
+---
+
+phoneng pairs naturally with Zod for schema validation. Use `isValid` for simple validation or `parse` with transforms for full normalization.
+
+## Why Zod + phoneng?
+
+Zod handles schema validation at API boundaries. phoneng handles Nigerian phone number specifics. Together:
+
+- Validate request bodies with proper type inference
+- Transform messy input into normalized formats
+- Get type-safe access to parsed phone data
+- Compose with other Zod validations
+
+## Pattern 1: Validation Only
+
+Use `isValid` with `refine` for simple boolean validation:
+
+```typescript
+import { z } from "zod";
+import { isValid } from "phoneng";
+
+const schema = z.object({
+  phone: z.string().refine(isValid, {
+    message: "Invalid Nigerian phone number",
+  }),
+});
+
+const result = schema.safeParse({
+  phone: "08031234567",
+});
+
+if (result.success) {
+  console.log(result.data.phone); // '08031234567' (unchanged)
+}
+```
+
+This validates but doesn't normalize. The output is the original input string.
+
+## Pattern 2: Validation + Normalization
+
+Use `parse` with `transform` to validate and normalize to E.164:
+
+```typescript
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const phoneSchema = z.string().transform((val, ctx) => {
+  const result = parse(val);
+
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid phone number: ${result.reason}`,
+    });
+    return z.NEVER;
+  }
+
+  return result.e164;
+});
+
+const schema = z.object({
+  phone: phoneSchema,
+});
+
+const result = schema.safeParse({
+  phone: "08031234567",
+});
+
+if (result.success) {
+  console.log(result.data.phone); // '+2348031234567'
+}
+```
+
+## Pattern 3: Full ParseResult
+
+Return the complete parsed result when you need network info:
+
+```typescript
+import { z } from "zod";
+import { parse, type ParseSuccess } from "phoneng";
+
+const phoneWithMetadataSchema = z.string().transform((val, ctx) => {
+  const result = parse(val);
+
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: result.reason,
+    });
+    return z.NEVER;
+  }
+
+  return result;
+});
+
+type PhoneData = z.infer<typeof phoneWithMetadataSchema>;
+
+const schema = z.object({
+  phone: phoneWithMetadataSchema,
+});
+
+const result = schema.safeParse({
+  phone: "08031234567",
+});
+
+if (result.success) {
+  console.log(result.data.phone.network); // 'MTN'
+  console.log(result.data.phone.e164); // '+2348031234567'
+}
+```
+
+## Hono Route Example
+
+```typescript
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const app = new Hono();
+
+const sendOTPSchema = z.object({
+  phone: z.string().transform((val, ctx) => {
+    const result = parse(val);
+    if (!result.valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid Nigerian phone number",
+      });
+      return z.NEVER;
+    }
+    return result.e164;
+  }),
+});
+
+app.post("/api/otp/send", zValidator("json", sendOTPSchema), async (c) => {
+  const { phone } = c.req.valid("json");
+
+  await sendOTP(phone);
+
+  return c.json({ success: true, phone });
+});
+```
+
+## Express Route Example
+
+```typescript
+import express from "express";
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const app = express();
+app.use(express.json());
+
+const registrationSchema = z.object({
+  email: z.string().email(),
+  phone: z.string().transform((val, ctx) => {
+    const result = parse(val);
+    if (!result.valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.reason,
+      });
+      return z.NEVER;
+    }
+    return result;
+  }),
+});
+
+app.post("/api/register", async (req, res) => {
+  const validation = registrationSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    return res.status(400).json({
+      errors: validation.error.flatten().fieldErrors,
+    });
+  }
+
+  const { email, phone } = validation.data;
+
+  await createUser({
+    email,
+    phone: phone.e164,
+    phoneNetwork: phone.network,
+  });
+
+  res.json({ success: true });
+});
+```
+
+## Reusable Phone Schema
+
+Create a reusable schema for your application:
+
+```typescript
+import { z } from "zod";
+import { parse, isValid, type ParseSuccess } from "phoneng";
+
+export const nigerianPhoneString = z.string().refine(isValid, {
+  message: "Invalid Nigerian phone number",
+});
+
+export const nigerianPhoneE164 = z.string().transform((val, ctx) => {
+  const result = parse(val);
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: result.reason,
+    });
+    return z.NEVER;
+  }
+  return result.e164;
+});
+
+export const nigerianPhoneFull = z.string().transform((val, ctx) => {
+  const result = parse(val);
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: result.reason,
+    });
+    return z.NEVER;
+  }
+  return result;
+});
+```
+
+## Optional Phone Fields
+
+Handle optional phone fields:
+
+```typescript
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const nigerianPhoneOptional = z
+  .string()
+  .optional()
+  .transform((val, ctx) => {
+    if (!val) return undefined;
+
+    const result = parse(val);
+    if (!result.valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.reason,
+      });
+      return z.NEVER;
+    }
+    return result.e164;
+  });
+
+const schema = z.object({
+  primaryPhone: nigerianPhoneE164,
+  secondaryPhone: nigerianPhoneOptional,
+});
+```
+
+## Array Validation
+
+Validate arrays of phone numbers:
+
+```typescript
+import { z } from "zod";
+import { parse } from "phoneng";
+
+const phoneArraySchema = z.array(
+  z.string().transform((val, ctx) => {
+    const result = parse(val);
+    if (!result.valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.reason,
+      });
+      return z.NEVER;
+    }
+    return result.e164;
+  }),
+);
+
+const result = phoneArraySchema.safeParse(["08031234567", "+2347011234567"]);
+
+if (result.success) {
+  console.log(result.data); // ['+2348031234567', '+2347011234567']
+}
+```
+
+## Error Mapping
+
+Map phoneng error codes to user-friendly Zod errors:
+
+```typescript
+import { z } from "zod";
+import { parse, type ParseErrorCode } from "phoneng";
+
+const errorMessages: Record<ParseErrorCode, string> = {
+  EMPTY_INPUT: "Phone number is required",
+  INVALID_CHARACTERS: "Phone number contains invalid characters",
+  INVALID_LENGTH: "Phone number has invalid length",
+  INVALID_COUNTRY_CODE: "Not a Nigerian phone number",
+  INVALID_PREFIX: "Unrecognized phone prefix",
+  TOO_SHORT: "Phone number is too short",
+  TOO_LONG: "Phone number is too long",
+  NOT_NIGERIAN: "Must be a Nigerian phone number",
+};
+
+const nigerianPhone = z.string().transform((val, ctx) => {
+  const result = parse(val);
+  if (!result.valid) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: errorMessages[result.reason],
+    });
+    return z.NEVER;
+  }
+  return result.e164;
+});
+```
