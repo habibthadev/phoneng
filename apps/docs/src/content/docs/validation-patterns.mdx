@@ -1,0 +1,340 @@
+---
+title: Validation Patterns
+description: Common validation patterns for Nigerian phone numbers including form validation, OTP flows, and database storage.
+---
+
+These patterns cover common use cases for phone number validation in Nigerian applications.
+
+## Form Validation
+
+### Real-time Validation
+
+Use `isPossible` for instant feedback as users type, then `isValid` on blur:
+
+```typescript
+import { isPossible, isValid } from 'phoneng';
+
+function PhoneInput() {
+  const [value, setValue] = useState('');
+  const [status, setStatus] = useState<'idle' | 'possible' | 'valid' | 'invalid'>('idle');
+
+  const handleChange = (input: string) => {
+    setValue(input);
+
+    if (!input.trim()) {
+      setStatus('idle');
+      return;
+    }
+
+    if (isPossible(input)) {
+      setStatus('possible');
+    } else {
+      setStatus('invalid');
+    }
+  };
+
+  const handleBlur = () => {
+    if (isValid(value)) {
+      setStatus('valid');
+    } else if (value.trim()) {
+      setStatus('invalid');
+    }
+  };
+
+  return (
+    <input
+      type="tel"
+      value={value}
+      onChange={(e) => handleChange(e.target.value)}
+      onBlur={handleBlur}
+      className={status === 'invalid' ? 'error' : ''}
+    />
+  );
+}
+```
+
+### Normalize Before Submit
+
+Parse and normalize on form submission:
+
+```typescript
+import { parse } from "phoneng";
+
+async function handleSubmit(formData: FormData) {
+  const rawPhone = formData.get("phone") as string;
+  const result = parse(rawPhone);
+
+  if (!result.valid) {
+    throw new Error(`Invalid phone: ${result.reason}`);
+  }
+
+  await saveUser({
+    phone: result.e164,
+    phoneNetwork: result.network,
+  });
+}
+```
+
+## OTP Flow
+
+Validate before sending OTP to avoid wasting credits:
+
+```typescript
+import { parse } from "phoneng";
+
+async function sendOTP(phone: string) {
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return {
+      success: false,
+      error: "Invalid phone number",
+      code: result.reason,
+    };
+  }
+
+  const otp = generateOTP();
+
+  await smsGateway.send({
+    to: result.e164,
+    message: `Your OTP is ${otp}`,
+  });
+
+  await redis.setex(`otp:${result.e164}`, 300, otp);
+
+  return { success: true };
+}
+```
+
+## Database Storage
+
+### Always Store E.164
+
+Store the canonical E.164 format in your database:
+
+```typescript
+import { parse } from "phoneng";
+
+async function createUser(data: { phone: string; name: string }) {
+  const result = parse(data.phone);
+
+  if (!result.valid) {
+    throw new Error("Invalid phone");
+  }
+
+  return await db.user.create({
+    data: {
+      name: data.name,
+      phone: result.e164,
+      phoneNetwork: result.network,
+    },
+  });
+}
+```
+
+### Display National Format
+
+Convert back to national format when displaying to users:
+
+```typescript
+function formatPhoneForDisplay(e164: string): string {
+  const result = parse(e164);
+  return result.valid ? result.national : e164;
+}
+
+function UserProfile({ user }) {
+  return (
+    <p>Phone: {formatPhoneForDisplay(user.phone)}</p>
+  );
+}
+```
+
+## Deduplication
+
+Normalize before checking for duplicates:
+
+```typescript
+import { parse } from "phoneng";
+
+async function checkDuplicate(phone: string): Promise<boolean> {
+  const result = parse(phone);
+
+  if (!result.valid) {
+    return false;
+  }
+
+  const existing = await db.user.findUnique({
+    where: { phone: result.e164 },
+  });
+
+  return existing !== null;
+}
+```
+
+## Search
+
+### Pre-filter with isPossible
+
+Use `isPossible` to quickly filter invalid searches:
+
+```typescript
+import { isPossible, parse } from "phoneng";
+
+async function searchByPhone(query: string) {
+  if (!isPossible(query)) {
+    return [];
+  }
+
+  const result = parse(query);
+
+  if (!result.valid) {
+    return [];
+  }
+
+  return await db.user.findMany({
+    where: { phone: result.e164 },
+  });
+}
+```
+
+### Search Multiple Formats
+
+Search across different formats the user might enter:
+
+```typescript
+import { parse } from "phoneng";
+
+async function searchPhone(query: string) {
+  const result = parse(query);
+
+  if (!result.valid) {
+    return await db.user.findMany({
+      where: {
+        phone: { contains: query },
+      },
+    });
+  }
+
+  return await db.user.findMany({
+    where: { phone: result.e164 },
+  });
+}
+```
+
+## Bulk Import
+
+### CSV Processing
+
+Validate and normalize a CSV of phone numbers:
+
+```typescript
+import { parseMany } from "phoneng";
+import { parse as parseCSV } from "csv-parse/sync";
+
+interface ImportResult {
+  valid: Array<{ original: string; e164: string; network: string }>;
+  invalid: Array<{ original: string; reason: string }>;
+}
+
+function processCSV(csvContent: string): ImportResult {
+  const records = parseCSV(csvContent, { columns: true });
+  const phones = records.map((r) => r.phone);
+
+  const batch = parseMany(phones);
+
+  const valid = batch.results
+    .map((r, i) => ({ result: r, original: phones[i] }))
+    .filter((item) => item.result.valid)
+    .map((item) => ({
+      original: item.original,
+      e164: item.result.e164,
+      network: item.result.network,
+    }));
+
+  const invalid = batch.results
+    .map((r, i) => ({ result: r, original: phones[i] }))
+    .filter((item) => !item.result.valid)
+    .map((item) => ({
+      original: item.original,
+      reason: item.result.reason,
+    }));
+
+  return { valid, invalid };
+}
+```
+
+## Integration with Payment Providers
+
+### Paystack
+
+Paystack requires the compact format without the plus sign:
+
+```typescript
+import { parse } from "phoneng";
+
+async function chargeCard(phone: string, amount: number) {
+  const result = parse(phone);
+
+  if (!result.valid) {
+    throw new Error("Invalid phone");
+  }
+
+  return await paystack.charge.create({
+    email: "user@example.com",
+    amount: amount * 100,
+    phone: result.compact,
+  });
+}
+```
+
+### Flutterwave
+
+```typescript
+import { parse } from "phoneng";
+
+async function initializePayment(phone: string, amount: number) {
+  const result = parse(phone);
+
+  if (!result.valid) {
+    throw new Error("Invalid phone");
+  }
+
+  return await flutterwave.charge({
+    phone_number: result.compact,
+    amount,
+    currency: "NGN",
+  });
+}
+```
+
+## Network-Specific Routing
+
+Route operations based on detected network:
+
+```typescript
+import { parse, type Network } from "phoneng";
+
+const smsGateways: Record<Network, string> = {
+  MTN: "gateway-mtn",
+  AIRTEL: "gateway-airtel",
+  GLO: "gateway-glo",
+  NINE_MOBILE: "gateway-9mobile",
+  NTEL: "gateway-default",
+  VISAFONE: "gateway-default",
+  SMILE: "gateway-default",
+  MAFAB: "gateway-default",
+  UNKNOWN: "gateway-default",
+};
+
+async function sendSMS(phone: string, message: string) {
+  const result = parse(phone);
+
+  if (!result.valid) {
+    throw new Error("Invalid phone");
+  }
+
+  const gateway = smsGateways[result.network];
+
+  return await sendViaGateway(gateway, result.e164, message);
+}
+```
