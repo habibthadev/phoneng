@@ -1,0 +1,97 @@
+---
+import type { Heading } from '../../lib/toc';
+import { filterHeadings } from '../../lib/toc';
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+const filteredHeadings = filterHeadings(headings);
+---
+
+{
+  filteredHeadings.length > 0 && (
+    <aside
+      class="fixed right-6 top-28 hidden w-56 xl:block"
+    >
+      <nav aria-label="Table of contents">
+        <h2 class="mb-4 text-[11px] font-semibold uppercase tracking-widest text-tertiary-label">
+          On this page
+        </h2>
+        <ul class="space-y-1 border-l border-separator/50" id="toc-list">
+          {filteredHeadings.map((heading) => (
+            <li>
+              <a
+                href={`#${heading.slug}`}
+                class:list={[
+                  'relative block py-1.5 text-[13px] leading-snug text-tertiary-label transition-all duration-200 hover:text-label',
+                  heading.depth === 2 && 'pl-4',
+                  heading.depth === 3 && 'pl-6 text-[12px]',
+                ]}
+                data-heading={heading.slug}
+              >
+                <span class="absolute left-0 top-0 bottom-0 w-px bg-transparent transition-colors duration-200" data-indicator></span>
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  )
+}
+
+<script>
+  const tocLinks = document.querySelectorAll<HTMLAnchorElement>('#toc-list a');
+  const headingIds = Array.from(tocLinks).map(
+    (link) => link.getAttribute('data-heading') as string
+  );
+
+  if (headingIds.length > 0 && 'IntersectionObserver' in window) {
+    const headingElements = headingIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    let activeId = headingIds[0];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          activeId = visibleEntries[0].target.id;
+          updateActiveLink();
+        }
+      },
+      {
+        rootMargin: '-100px 0px -70% 0px',
+        threshold: 0,
+      }
+    );
+
+    function updateActiveLink() {
+      tocLinks.forEach((link) => {
+        const isActive = link.getAttribute('data-heading') === activeId;
+        const indicator = link.querySelector('[data-indicator]');
+        if (isActive) {
+          link.classList.add('text-accent', 'font-medium');
+          link.classList.remove('text-tertiary-label');
+          if (indicator) {
+            indicator.classList.add('bg-accent');
+            indicator.classList.remove('bg-transparent');
+          }
+        } else {
+          link.classList.remove('text-accent', 'font-medium');
+          link.classList.add('text-tertiary-label');
+          if (indicator) {
+            indicator.classList.remove('bg-accent');
+            indicator.classList.add('bg-transparent');
+          }
+        }
+      });
+    }
+
+    headingElements.forEach((el) => observer.observe(el));
+    updateActiveLink();
+  }
+</script>
