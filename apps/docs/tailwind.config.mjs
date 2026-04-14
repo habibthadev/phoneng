@@ -1,0 +1,46 @@
+export default {
+  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        label: "var(--color-label)",
+        "secondary-label": "var(--color-secondary-label)",
+        "tertiary-label": "var(--color-tertiary-label)",
+        "quaternary-label": "var(--color-quaternary-label)",
+        bg: "var(--color-bg)",
+        "bg-secondary": "var(--color-bg-secondary)",
+        "bg-tertiary": "var(--color-bg-tertiary)",
+        separator: "var(--color-separator)",
+        fill: "var(--color-fill)",
+        accent: "var(--color-accent)",
+        "accent-hover": "var(--color-accent-hover)",
+        "code-bg": "var(--color-code-bg)",
+        danger: "var(--color-danger)",
+        warning: "var(--color-warning)",
+        success: "var(--color-success)",
+      },
+      fontFamily: {
+        display: ["var(--font-display)"],
+        mono: ["var(--font-mono)"],
+        sans: ["var(--font-display)"],
+      },
+      fontSize: {
+        caption: ["0.6875rem", { lineHeight: "1.47" }],
+        footnote: ["0.8125rem", { lineHeight: "1.47" }],
+        body: ["0.9375rem", { lineHeight: "1.47" }],
+        callout: ["1.0625rem", { lineHeight: "1.47" }],
+        title3: ["1.25rem", { lineHeight: "1.3" }],
+        title2: ["1.375rem", { lineHeight: "1.3" }],
+        title1: ["1.75rem", { lineHeight: "1.3" }],
+        "large-title": ["2.125rem", { lineHeight: "1.2" }],
+      },
+      borderRadius: {
+        small: "6px",
+        medium: "10px",
+        large: "14px",
+      },
+    },
+  },
+  plugins: [],
+};
