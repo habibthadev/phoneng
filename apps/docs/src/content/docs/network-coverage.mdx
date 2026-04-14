@@ -1,0 +1,198 @@
+---
+title: Network Coverage
+description: Complete list of Nigerian mobile network prefixes supported by phoneng, including MTN, Airtel, Glo, 9mobile, and others.
+---
+
+phoneng identifies network operators based on the three-digit prefix following the trunk code. This prefix-to-network mapping is based on official NCC (Nigerian Communications Commission) allocations.
+
+## Major Networks
+
+### MTN Nigeria
+
+MTN is Nigeria's largest mobile network operator. They hold the most prefix allocations.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0803   | 0803XXXXXXX |
+| 0806   | 0806XXXXXXX |
+| 0810   | 0810XXXXXXX |
+| 0813   | 0813XXXXXXX |
+| 0814   | 0814XXXXXXX |
+| 0816   | 0816XXXXXXX |
+| 0903   | 0903XXXXXXX |
+| 0906   | 0906XXXXXXX |
+| 0703   | 0703XXXXXXX |
+| 0704   | 0704XXXXXXX |
+| 0706   | 0706XXXXXXX |
+| 0707   | 0707XXXXXXX |
+| 0913   | 0913XXXXXXX |
+| 0916   | 0916XXXXXXX |
+
+### Airtel Nigeria
+
+Airtel is the second-largest network, formerly known as Zain and Econet.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0802   | 0802XXXXXXX |
+| 0808   | 0808XXXXXXX |
+| 0812   | 0812XXXXXXX |
+| 0701   | 0701XXXXXXX |
+| 0708   | 0708XXXXXXX |
+| 0901   | 0901XXXXXXX |
+| 0902   | 0902XXXXXXX |
+| 0904   | 0904XXXXXXX |
+| 0907   | 0907XXXXXXX |
+| 0911   | 0911XXXXXXX |
+| 0912   | 0912XXXXXXX |
+
+### Glo (Globacom)
+
+Glo is a Nigerian-owned telecommunications company.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0805   | 0805XXXXXXX |
+| 0807   | 0807XXXXXXX |
+| 0811   | 0811XXXXXXX |
+| 0815   | 0815XXXXXXX |
+| 0705   | 0705XXXXXXX |
+| 0905   | 0905XXXXXXX |
+| 0915   | 0915XXXXXXX |
+
+### 9mobile (formerly Etisalat)
+
+9mobile operates the fourth-largest network in Nigeria.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0809   | 0809XXXXXXX |
+| 0817   | 0817XXXXXXX |
+| 0818   | 0818XXXXXXX |
+| 0908   | 0908XXXXXXX |
+| 0909   | 0909XXXXXXX |
+
+## Other Operators
+
+### Ntel
+
+Ntel is a 4G LTE-focused operator.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0804   | 0804XXXXXXX |
+
+### Smile
+
+Smile provides 4G LTE broadband services.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0702   | 0702XXXXXXX |
+
+### MAFAB
+
+MAFAB Communications is a newer entrant with 5G spectrum.
+
+| Prefix | Format      |
+| ------ | ----------- |
+| 0801   | 0801XXXXXXX |
+
+## Special Numbers
+
+Some prefixes are reserved for special services:
+
+| Prefix | Type    | Description              |
+| ------ | ------- | ------------------------ |
+| 0700   | SPECIAL | Universal access numbers |
+| 0800   | SPECIAL | Toll-free numbers        |
+| 0900   | SPECIAL | Premium rate services    |
+
+These prefixes return `network: 'UNKNOWN'` and `type: 'SPECIAL'`.
+
+## Mobile Number Portability (MNP)
+
+Nigeria introduced Mobile Number Portability in 2013. This allows subscribers to switch carriers while keeping their phone number.
+
+**Important:** phoneng identifies the _original_ network that was allocated the prefix, not the current carrier. After porting, a number's prefix no longer reflects its actual carrier.
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+// result.network === 'MTN'
+// But the number might have ported to Airtel
+```
+
+If you need to know the current carrier, you must use a carrier lookup API (like Twilio Lookup) which queries live databases.
+
+## Prefix Detection
+
+phoneng extracts the prefix from the normalized number:
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("+2348031234567");
+if (result.valid) {
+  console.log(result.prefix); // '0803'
+  console.log(result.network); // 'MTN'
+}
+```
+
+The prefix is always returned in national format (`0XXX`) for consistency.
+
+## Data Source
+
+The prefix-to-network mapping is based on:
+
+1. Nigerian Communications Commission (NCC) official number allocation records
+2. Historical operator assignments and migrations
+3. Regular updates as new prefixes are allocated
+
+The prefix data is accurate as of January 2024. New prefix allocations are added in library updates.
+
+## Complete Prefix Table
+
+| Prefix | Network     | Type   |
+| ------ | ----------- | ------ |
+| 0801   | MAFAB       | MOBILE |
+| 0802   | AIRTEL      | MOBILE |
+| 0803   | MTN         | MOBILE |
+| 0804   | NTEL        | MOBILE |
+| 0805   | GLO         | MOBILE |
+| 0806   | MTN         | MOBILE |
+| 0807   | GLO         | MOBILE |
+| 0808   | AIRTEL      | MOBILE |
+| 0809   | NINE_MOBILE | MOBILE |
+| 0810   | MTN         | MOBILE |
+| 0811   | GLO         | MOBILE |
+| 0812   | AIRTEL      | MOBILE |
+| 0813   | MTN         | MOBILE |
+| 0814   | MTN         | MOBILE |
+| 0815   | GLO         | MOBILE |
+| 0816   | MTN         | MOBILE |
+| 0817   | NINE_MOBILE | MOBILE |
+| 0818   | NINE_MOBILE | MOBILE |
+| 0701   | AIRTEL      | MOBILE |
+| 0702   | SMILE       | MOBILE |
+| 0703   | MTN         | MOBILE |
+| 0704   | MTN         | MOBILE |
+| 0705   | GLO         | MOBILE |
+| 0706   | MTN         | MOBILE |
+| 0707   | MTN         | MOBILE |
+| 0708   | AIRTEL      | MOBILE |
+| 0901   | AIRTEL      | MOBILE |
+| 0902   | AIRTEL      | MOBILE |
+| 0903   | MTN         | MOBILE |
+| 0904   | AIRTEL      | MOBILE |
+| 0905   | GLO         | MOBILE |
+| 0906   | MTN         | MOBILE |
+| 0907   | AIRTEL      | MOBILE |
+| 0908   | NINE_MOBILE | MOBILE |
+| 0909   | NINE_MOBILE | MOBILE |
+| 0911   | AIRTEL      | MOBILE |
+| 0912   | AIRTEL      | MOBILE |
+| 0913   | MTN         | MOBILE |
+| 0915   | GLO         | MOBILE |
+| 0916   | MTN         | MOBILE |
