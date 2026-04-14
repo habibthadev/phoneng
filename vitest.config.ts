@@ -8,7 +8,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["packages/phoneng/src/**/*.ts"],
-      exclude: ["**/*.test.ts", "**/*.bench.ts"],
+      exclude: ["**/*.test.ts", "**/*.bench.ts", "**/types.ts"],
       thresholds: {
         lines: 95,
         branches: 90,
