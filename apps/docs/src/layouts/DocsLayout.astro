@@ -1,0 +1,408 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Sidebar from '../components/layout/Sidebar.astro';
+import TableOfContents from '../components/layout/TableOfContents.astro';
+import Footer from '../components/layout/Footer.astro';
+import { getPrevNext } from '../lib/navigation';
+import type { Heading } from '../lib/toc';
+import { filterHeadings } from '../lib/toc';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  headings?: Heading[];
+}
+
+const { title, description, ogImage, headings = [] } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+const { prev, next } = getPrevNext(currentPath);
+const filteredHeadings = filterHeadings(headings);
+---
+
+<BaseLayout title={title} description={description} ogImage={ogImage}>
+  <Header />
+  
+  {filteredHeadings.length > 0 && (
+    <div class="fixed top-16 left-0 right-0 z-40 bg-bg border-b border-separator/50 xl:hidden lg:left-64" id="mobile-toc-container">
+      <div class="absolute top-0 left-0 h-0.5 bg-accent transition-all duration-150" id="scroll-progress" style="width: 0%"></div>
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          class="toc-toggle w-full flex items-center justify-between py-2.5 text-left gap-3"
+          aria-expanded="false"
+          aria-controls="mobile-toc-dropdown"
+        >
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="relative w-6 h-6 shrink-0">
+              <svg class="w-6 h-6 -rotate-90" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-separator)" stroke-width="2" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  fill="none"
+                  stroke="var(--color-accent)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-dasharray="62.83"
+                  stroke-dashoffset="62.83"
+                  id="progress-circle"
+                />
+              </svg>
+            </div>
+            <span class="font-display text-[13px] font-medium text-label truncate" id="toc-current-section">On this page</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="toc-chevron text-tertiary-label transition-transform duration-200 shrink-0" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+      <div id="mobile-toc-dropdown" class="hidden absolute left-0 right-0 top-full bg-bg border-b border-separator max-h-[50vh] overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-1">
+          <nav class="flex" aria-label="Page sections">
+            <div class="w-px bg-separator/50 shrink-0 mr-3"></div>
+            <div class="flex-1 py-1">
+              {filteredHeadings.map((heading) => (
+                <a
+                  href={`#${heading.slug}`}
+                  data-toc-link={heading.slug}
+                  class:list={[
+                    'block py-2 font-display text-[13px] text-secondary-label hover:text-label transition-colors relative',
+                    heading.depth === 3 && 'pl-3 text-[12px]',
+                  ]}
+                >
+                  <span class="absolute left-[-13px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors" data-toc-indicator></span>
+                  {heading.text}
+                </a>
+              ))}
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class={`flex ${filteredHeadings.length > 0 ? 'pt-[7rem] xl:pt-16' : 'pt-16'}`}>
+    <Sidebar currentPath={currentPath} />
+    <main class="min-h-[calc(100vh-4rem)] flex-1 lg:ml-64 xl:mr-56 w-full max-w-full overflow-hidden">
+      <article class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+        <header class="mb-8 sm:mb-10 pb-6 sm:pb-8 border-b border-separator/50">
+          <h1 class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-label leading-tight mb-2 sm:mb-3">{title}</h1>
+          <p class="font-display text-base sm:text-lg text-secondary-label leading-relaxed">{description}</p>
+        </header>
+        
+        <div class="docs-content">
+          <slot />
+        </div>
+
+        {
+          (prev || next) && (
+            <nav
+              class="mt-12 sm:mt-16 lg:mt-20 grid gap-3 sm:gap-4 sm:grid-cols-2 pt-8 sm:pt-10 border-t border-separator/50"
+              aria-label="Page navigation"
+            >
+              {prev ? (
+                <a
+                  href={prev.href}
+                  class="group flex flex-col p-4 sm:p-5 rounded-xl border border-separator/50 bg-fill/30 hover:bg-fill hover:border-separator transition-all duration-200"
+                >
+                  <span class="font-display text-xs font-medium text-tertiary-label mb-1.5 sm:mb-2 flex items-center gap-1.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="transition-transform duration-200 group-hover:-translate-x-0.5"
+                      aria-hidden="true"
+                    >
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                    Previous
+                  </span>
+                  <span class="font-display text-sm sm:text-[15px] font-medium text-label group-hover:text-accent transition-colors">{prev.title}</span>
+                </a>
+              ) : (
+                <div />
+              )}
+              {next && (
+                <a
+                  href={next.href}
+                  class="group flex flex-col items-end text-right p-4 sm:p-5 rounded-xl border border-separator/50 bg-fill/30 hover:bg-fill hover:border-separator transition-all duration-200"
+                >
+                  <span class="font-display text-xs font-medium text-tertiary-label mb-1.5 sm:mb-2 flex items-center gap-1.5">
+                    Next
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </span>
+                  <span class="font-display text-sm sm:text-[15px] font-medium text-label group-hover:text-accent transition-colors">{next.title}</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </article>
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Footer />
+      </div>
+    </main>
+    <TableOfContents headings={headings} />
+  </div>
+</BaseLayout>
+
+<script>
+  function initCodeCopy() {
+    const codeBlocks = document.querySelectorAll('.astro-code, .shiki, pre:not(.astro-code):not(.shiki)');
+    
+    codeBlocks.forEach((block) => {
+      if (block.querySelector('.code-copy-btn')) return;
+      if (block.closest('.code-block-wrapper')) return;
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrapper';
+      block.parentNode?.insertBefore(wrapper, block);
+      wrapper.appendChild(block);
+      
+      const button = document.createElement('button');
+      button.className = 'code-copy-btn';
+      button.setAttribute('aria-label', 'Copy code');
+      button.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="copy-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon hidden"><path d="M20 6 9 17l-5-5"/></svg>
+      `;
+      wrapper.appendChild(button);
+      
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.textContent || block.textContent || '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+        }
+        
+        const copyIcon = button.querySelector('.copy-icon');
+        const checkIcon = button.querySelector('.check-icon');
+        copyIcon?.classList.add('hidden');
+        checkIcon?.classList.remove('hidden');
+        button.setAttribute('aria-label', 'Copied');
+        
+        setTimeout(() => {
+          copyIcon?.classList.remove('hidden');
+          checkIcon?.classList.add('hidden');
+          button.setAttribute('aria-label', 'Copy code');
+        }, 2000);
+      });
+    });
+  }
+
+  function initMobileToc() {
+    const toggleBtn = document.querySelector('.toc-toggle');
+    const dropdown = document.getElementById('mobile-toc-dropdown');
+    const chevron = document.querySelector('.toc-chevron');
+    const currentSection = document.getElementById('toc-current-section');
+    const progressBar = document.getElementById('scroll-progress');
+    const progressCircle = document.getElementById('progress-circle');
+    
+    if (!toggleBtn || !dropdown) return;
+    
+    const tocLinks = dropdown.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+    const headingIds = Array.from(tocLinks).map(link => link.getAttribute('data-toc-link') as string);
+    const headingTexts = new Map(Array.from(tocLinks).map(link => [
+      link.getAttribute('data-toc-link'),
+      link.textContent?.trim()
+    ]));
+    
+    const headingElements = headingIds
+      .map(id => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+    
+    let activeId = headingIds[0] || '';
+    
+    toggleBtn.addEventListener('click', () => {
+      const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+      toggleBtn.setAttribute('aria-expanded', (!isExpanded).toString());
+      dropdown.classList.toggle('hidden');
+      chevron?.classList.toggle('rotate-180');
+    });
+    
+    tocLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        dropdown.classList.add('hidden');
+        chevron?.classList.remove('rotate-180');
+      });
+    });
+    
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('mobile-toc-container');
+      if (container && !container.contains(e.target as Node)) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        dropdown.classList.add('hidden');
+        chevron?.classList.remove('rotate-180');
+      }
+    });
+    
+    function updateScrollProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      
+      if (progressBar) {
+        progressBar.style.width = `${progress * 100}%`;
+      }
+      
+      if (progressCircle) {
+        const circumference = 62.83;
+        const offset = circumference - (progress * circumference);
+        progressCircle.style.strokeDashoffset = offset.toString();
+      }
+    }
+    
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+    updateScrollProgress();
+    
+    if (headingElements.length === 0) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter(entry => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          activeId = visibleEntries[0].target.id;
+          updateActiveSection();
+        }
+      },
+      {
+        rootMargin: '-120px 0px -70% 0px',
+        threshold: 0,
+      }
+    );
+    
+    function updateActiveSection() {
+      tocLinks.forEach(link => {
+        const isActive = link.getAttribute('data-toc-link') === activeId;
+        const indicator = link.querySelector('[data-toc-indicator]');
+        
+        if (isActive) {
+          link.classList.add('text-accent', 'font-medium');
+          link.classList.remove('text-secondary-label');
+          indicator?.classList.add('bg-accent');
+          indicator?.classList.remove('bg-transparent');
+          
+          const dropdownIsOpen = !dropdown.classList.contains('hidden');
+          if (dropdownIsOpen) {
+            link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        } else {
+          link.classList.remove('text-accent', 'font-medium');
+          link.classList.add('text-secondary-label');
+          indicator?.classList.remove('bg-accent');
+          indicator?.classList.add('bg-transparent');
+        }
+      });
+      
+      if (currentSection && activeId) {
+        const text = headingTexts.get(activeId);
+        if (text) {
+          currentSection.textContent = text;
+        }
+      }
+    }
+    
+    headingElements.forEach(el => observer.observe(el));
+    updateActiveSection();
+  }
+  
+  initCodeCopy();
+  initMobileToc();
+  document.addEventListener('astro:page-load', () => {
+    initCodeCopy();
+    initMobileToc();
+  });
+</script>
+
+<style is:global>
+  .code-block-wrapper {
+    position: relative;
+  }
+  
+  .code-copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-separator);
+    border-radius: 8px;
+    color: var(--color-tertiary-label);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background-color 0.15s;
+  }
+  
+  .code-block-wrapper:hover .code-copy-btn,
+  .code-copy-btn:focus {
+    opacity: 1;
+  }
+  
+  .code-copy-btn:hover {
+    color: var(--color-label);
+    background: var(--color-fill);
+  }
+  
+  .code-copy-btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    opacity: 1;
+  }
+  
+  .code-copy-btn .check-icon {
+    color: var(--color-success);
+  }
+  
+  .code-copy-btn .hidden {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .code-copy-btn {
+      opacity: 1;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+    }
+    
+    .code-copy-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+</style>
