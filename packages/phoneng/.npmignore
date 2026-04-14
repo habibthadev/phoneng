@@ -1,0 +1,10 @@
+src
+tests
+benchmarks
+*.md
+tsconfig.json
+tsup.config.ts
+.eslintrc.cjs
+.prettierrc
+.prettierignore
+node_modules/
