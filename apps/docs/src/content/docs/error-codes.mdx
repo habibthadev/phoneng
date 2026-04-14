@@ -1,0 +1,191 @@
+---
+title: Error Codes
+description: Complete reference for all phoneng error codes with examples and recommended handling strategies.
+---
+
+When parsing fails, phoneng returns a `ParseFailure` object with a specific error code explaining what went wrong. Use these codes to provide helpful feedback to users.
+
+## Error Code Reference
+
+| Code                   | Meaning                             | Example Input             |
+| ---------------------- | ----------------------------------- | ------------------------- |
+| `EMPTY_INPUT`          | No input provided                   | `""`, `null`, `undefined` |
+| `INVALID_CHARACTERS`   | Contains letters or symbols         | `"080ABC1234567"`         |
+| `TOO_SHORT`            | Number has too few digits           | `"0803123"`               |
+| `TOO_LONG`             | Number has too many digits          | `"080312345678901"`       |
+| `INVALID_PREFIX`       | Prefix not assigned to any operator | `"08991234567"`           |
+| `INVALID_LENGTH`       | General length validation failure   | Various edge cases        |
+| `INVALID_COUNTRY_CODE` | Unrecognized country code           | `"+1234567890123"`        |
+| `NOT_NIGERIAN`         | Valid format but not Nigerian       | `"+442071234567"`         |
+
+## Handling Errors
+
+Use the discriminated union to narrow types and handle each error:
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse(userInput);
+
+if (!result.valid) {
+  switch (result.reason) {
+    case "EMPTY_INPUT":
+      return "Please enter a phone number";
+    case "INVALID_CHARACTERS":
+      return "Phone number can only contain digits";
+    case "TOO_SHORT":
+      return "Phone number is too short";
+    case "TOO_LONG":
+      return "Phone number is too long";
+    case "INVALID_PREFIX":
+      return "This prefix is not recognized as a Nigerian network";
+    default:
+      return "Invalid phone number format";
+  }
+}
+```
+
+## EMPTY_INPUT
+
+Returned when the input is empty, null, undefined, or contains only whitespace.
+
+```typescript
+parse(""); // { valid: false, reason: 'EMPTY_INPUT' }
+parse("   "); // { valid: false, reason: 'EMPTY_INPUT' }
+parse(null as any); // { valid: false, reason: 'EMPTY_INPUT' }
+```
+
+**User message:** "Please enter a phone number"
+
+## INVALID_CHARACTERS
+
+Returned when the input contains letters or other non-digit characters that aren't allowed separators.
+
+```typescript
+parse("080ABC1234567"); // { valid: false, reason: 'INVALID_CHARACTERS' }
+parse("phone: 0803"); // { valid: false, reason: 'INVALID_CHARACTERS' }
+```
+
+Allowed characters: digits (0-9), plus sign (+), spaces, dashes, parentheses, and the `tel:` prefix.
+
+**User message:** "Phone number should only contain numbers"
+
+## TOO_SHORT
+
+Returned when the normalized digit count is less than 10.
+
+```typescript
+parse("0803123"); // { valid: false, reason: 'TOO_SHORT' }
+parse("+23480312"); // { valid: false, reason: 'TOO_SHORT' }
+```
+
+Nigerian mobile numbers require exactly 10 digits after normalizing the country code and trunk prefix.
+
+**User message:** "Phone number is too short. Nigerian numbers have 11 digits (including the leading 0)."
+
+## TOO_LONG
+
+Returned when the normalized digit count exceeds 10.
+
+```typescript
+parse("080312345678901"); // { valid: false, reason: 'TOO_LONG' }
+```
+
+**User message:** "Phone number is too long. Please check and try again."
+
+## INVALID_PREFIX
+
+Returned when the three-digit prefix (e.g., 803, 701) is not assigned to any Nigerian mobile network operator.
+
+```typescript
+parse("08991234567"); // { valid: false, reason: 'INVALID_PREFIX' }
+parse("04001234567"); // { valid: false, reason: 'INVALID_PREFIX' }
+```
+
+The prefix map is based on NCC (Nigerian Communications Commission) allocations. See [Network Coverage](/docs/network-coverage) for all valid prefixes.
+
+**User message:** "This doesn't appear to be a valid Nigerian mobile number. Please check the number and try again."
+
+## Error Message Helper
+
+Create a helper function to convert error codes to user-friendly messages:
+
+```typescript
+import type { ParseErrorCode } from "phoneng";
+
+const errorMessages: Record<ParseErrorCode, string> = {
+  EMPTY_INPUT: "Please enter a phone number",
+  INVALID_CHARACTERS: "Phone number should only contain numbers",
+  INVALID_LENGTH: "Invalid phone number length",
+  INVALID_COUNTRY_CODE: "Please enter a Nigerian phone number",
+  INVALID_PREFIX: "This prefix is not recognized",
+  TOO_SHORT: "Phone number is too short",
+  TOO_LONG: "Phone number is too long",
+  NOT_NIGERIAN: "Please enter a Nigerian phone number",
+};
+
+function getErrorMessage(code: ParseErrorCode): string {
+  return errorMessages[code];
+}
+```
+
+## Form Validation Example
+
+```typescript
+import { parse } from "phoneng";
+
+function validatePhone(input: string): { valid: boolean; error?: string } {
+  const result = parse(input);
+
+  if (result.valid) {
+    return { valid: true };
+  }
+
+  const messages: Record<string, string> = {
+    EMPTY_INPUT: "Phone number is required",
+    INVALID_CHARACTERS: "Only digits are allowed",
+    TOO_SHORT: "Number is too short",
+    TOO_LONG: "Number is too long",
+    INVALID_PREFIX: "Invalid Nigerian mobile prefix",
+  };
+
+  return {
+    valid: false,
+    error: messages[result.reason] || "Invalid phone number",
+  };
+}
+```
+
+## Exhaustive Error Handling
+
+TypeScript's exhaustive checking ensures you handle all error cases:
+
+```typescript
+import { parse, type ParseErrorCode } from "phoneng";
+
+function handleError(code: ParseErrorCode): string {
+  switch (code) {
+    case "EMPTY_INPUT":
+      return "Required";
+    case "INVALID_CHARACTERS":
+      return "Invalid characters";
+    case "INVALID_LENGTH":
+      return "Invalid length";
+    case "INVALID_COUNTRY_CODE":
+      return "Invalid country code";
+    case "INVALID_PREFIX":
+      return "Unknown prefix";
+    case "TOO_SHORT":
+      return "Too short";
+    case "TOO_LONG":
+      return "Too long";
+    case "NOT_NIGERIAN":
+      return "Not Nigerian";
+    default:
+      const _exhaustive: never = code;
+      return _exhaustive;
+  }
+}
+```
+
+The `never` type in the default case causes a compile error if you miss any error code.
