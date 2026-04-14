@@ -1,0 +1,154 @@
+---
+title: Installation
+description: Install phoneng and configure it for your project. Supports npm, pnpm, yarn, and all major JavaScript runtimes.
+---
+
+phoneng ships as a dual ESM/CJS package with full TypeScript declarations. No additional `@types` package is needed.
+
+## Package Managers
+
+Install with your preferred package manager:
+
+```bash
+npm install phoneng
+```
+
+```bash
+pnpm add phoneng
+```
+
+```bash
+yarn add phoneng
+```
+
+## Requirements
+
+- Node.js 18.0.0 or later
+- No native dependencies or platform-specific code
+
+phoneng works in any JavaScript runtime: Node.js, Deno, Bun, and modern browsers.
+
+## Verifying Installation
+
+Run this command to verify phoneng is installed correctly:
+
+```bash
+node -e "console.log(require('phoneng').parse('08031234567'))"
+```
+
+You should see:
+
+```json
+{
+  "valid": true,
+  "e164": "+2348031234567",
+  "national": "08031234567",
+  "international": "+234 803 123 4567",
+  "compact": "2348031234567",
+  "rfc3966": "tel:+2348031234567",
+  "prefix": "0803",
+  "network": "MTN",
+  "type": "MOBILE"
+}
+```
+
+## ESM Import
+
+phoneng is an ES module by default:
+
+```typescript
+import { parse, parseMany, isValid, isPossible } from "phoneng";
+```
+
+## CommonJS Require
+
+CommonJS is also supported:
+
+```javascript
+const { parse, parseMany, isValid, isPossible } = require("phoneng");
+```
+
+## TypeScript Configuration
+
+phoneng ships with full type declarations. No additional configuration is required.
+
+For strict type checking, ensure your `tsconfig.json` includes:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+The `moduleResolution: "bundler"` setting works best with modern bundlers. If you're using Node.js directly without a bundler, use `"moduleResolution": "node16"` or `"nodenext"`.
+
+## Bundle Size
+
+phoneng is optimized for minimal footprint:
+
+| Format | Size (brotli) |
+| ------ | ------------- |
+| ESM    | ~950 bytes    |
+| CJS    | ~962 bytes    |
+
+The small size comes from having zero dependencies and shipping only essential code.
+
+## Monorepo Setup
+
+If you're using phoneng in a pnpm workspace:
+
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - "packages/*"
+  - "apps/*"
+```
+
+Reference phoneng from other workspace packages:
+
+```json
+{
+  "dependencies": {
+    "phoneng": "workspace:*"
+  }
+}
+```
+
+## Browser Usage
+
+phoneng works in browsers without modification. Import it directly or use a bundler:
+
+```html
+<script type="module">
+  import { parse } from "https://esm.sh/phoneng";
+
+  const result = parse("08031234567");
+  console.log(result);
+</script>
+```
+
+## Deno
+
+Import from npm:
+
+```typescript
+import { parse } from "npm:phoneng";
+
+const result = parse("08031234567");
+console.log(result);
+```
+
+## Bun
+
+Bun supports phoneng out of the box:
+
+```bash
+bun add phoneng
+```
+
+```typescript
+import { parse } from "phoneng";
+```
