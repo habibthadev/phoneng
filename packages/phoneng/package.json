@@ -1,0 +1,46 @@
+{
+  "name": "phoneng",
+  "version": "1.0.0",
+  "description": "Zero-dependency TypeScript library for parsing, validating, and formatting Nigerian phone numbers",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsup --watch",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build"
+  },
+  "keywords": [
+    "nigeria",
+    "phone",
+    "number",
+    "validation",
+    "parser",
+    "formatter",
+    "nigerian",
+    "telephone",
+    "mobile",
+    "ncc"
+  ],
+  "author": "Habib Adebayo",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
