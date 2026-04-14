@@ -1,0 +1,95 @@
+---
+const prefixes = [
+  { prefix: '0801', network: 'MAFAB', type: 'MOBILE' },
+  { prefix: '0802', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0803', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0804', network: 'NTEL', type: 'MOBILE' },
+  { prefix: '0805', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0806', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0807', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0808', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0809', network: 'NINE_MOBILE', type: 'MOBILE' },
+  { prefix: '0810', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0811', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0812', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0813', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0814', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0815', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0816', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0817', network: 'NINE_MOBILE', type: 'MOBILE' },
+  { prefix: '0818', network: 'NINE_MOBILE', type: 'MOBILE' },
+  { prefix: '0700', network: 'UNKNOWN', type: 'SPECIAL' },
+  { prefix: '0701', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0702', network: 'SMILE', type: 'MOBILE' },
+  { prefix: '0703', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0704', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0705', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0706', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0707', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0708', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0800', network: 'UNKNOWN', type: 'SPECIAL' },
+  { prefix: '0900', network: 'UNKNOWN', type: 'SPECIAL' },
+  { prefix: '0901', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0902', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0903', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0904', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0905', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0906', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0907', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0908', network: 'NINE_MOBILE', type: 'MOBILE' },
+  { prefix: '0909', network: 'NINE_MOBILE', type: 'MOBILE' },
+  { prefix: '0911', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0912', network: 'AIRTEL', type: 'MOBILE' },
+  { prefix: '0913', network: 'MTN', type: 'MOBILE' },
+  { prefix: '0915', network: 'GLO', type: 'MOBILE' },
+  { prefix: '0916', network: 'MTN', type: 'MOBILE' },
+];
+
+const networkColors: Record<string, { bg: string; text: string }> = {
+  MTN: { bg: '#ffcc00', text: '#000000' },
+  AIRTEL: { bg: '#e60000', text: '#ffffff' },
+  GLO: { bg: '#00a550', text: '#ffffff' },
+  NINE_MOBILE: { bg: '#006666', text: '#ffffff' },
+  NTEL: { bg: '#4a4a4a', text: '#ffffff' },
+  SMILE: { bg: '#00bfff', text: '#ffffff' },
+  MAFAB: { bg: '#6b21a8', text: '#ffffff' },
+  UNKNOWN: { bg: '#6b7280', text: '#ffffff' },
+};
+---
+
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-[14px]">
+    <thead>
+      <tr class="border-b border-separator">
+        <th class="px-4 py-3 font-medium text-label">Prefix</th>
+        <th class="px-4 py-3 font-medium text-label">Network</th>
+        <th class="px-4 py-3 font-medium text-label">Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        prefixes.map((entry) => (
+          <tr class="border-b border-separator">
+            <td class="px-4 py-3 font-mono text-[13px] text-secondary-label">
+              {entry.prefix}
+            </td>
+            <td class="px-4 py-3">
+              <span
+                class="inline-block rounded-small px-2 py-0.5 text-[11px] font-medium"
+                style={`background-color: ${networkColors[entry.network].bg}; color: ${networkColors[entry.network].text}`}
+              >
+                {entry.network === 'NINE_MOBILE'
+                  ? '9mobile'
+                  : entry.network.charAt(0) +
+                    entry.network.slice(1).toLowerCase()}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-[13px] text-secondary-label">
+              {entry.type}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
