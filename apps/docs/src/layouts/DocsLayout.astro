@@ -312,7 +312,7 @@ const filteredHeadings = filterHeadings(headings);
           indicator?.classList.add('bg-accent');
           indicator?.classList.remove('bg-transparent');
           
-          const dropdownIsOpen = !dropdown.classList.contains('hidden');
+          const dropdownIsOpen = !dropdown!.classList.contains('hidden');
           if (dropdownIsOpen) {
             link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
           }
