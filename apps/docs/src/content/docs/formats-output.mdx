@@ -1,0 +1,172 @@
+---
+title: Formats & Output
+description: Understand the five output formats returned by phoneng and when to use each one.
+---
+
+When parsing succeeds, phoneng returns five different representations of the same phone number. Each format serves a specific purpose.
+
+## Output Formats
+
+| Property        | Example              | Description                                |
+| --------------- | -------------------- | ------------------------------------------ |
+| `e164`          | `+2348031234567`     | ITU-T E.164 international format           |
+| `national`      | `08031234567`        | Nigerian national format with trunk prefix |
+| `international` | `+234 803 123 4567`  | Human-readable international format        |
+| `compact`       | `2348031234567`      | Country code + number without plus sign    |
+| `rfc3966`       | `tel:+2348031234567` | RFC 3966 telephone URI for click-to-call   |
+
+## E.164 Format
+
+```typescript
+result.e164; // +2348031234567
+```
+
+The E.164 format is the international standard for phone numbers. It always starts with `+`, followed by the country code (234 for Nigeria) and the 10-digit subscriber number.
+
+**Use E.164 for:**
+
+- Database storage (canonical format)
+- SMS APIs (Twilio, Africa's Talking, Termii)
+- International phone number fields
+- WhatsApp Business API
+- Firebase Authentication
+
+```typescript
+await twilioClient.messages.create({
+  to: result.e164,
+  from: "+15551234567",
+  body: "Hello from Nigeria!",
+});
+```
+
+## National Format
+
+```typescript
+result.national; // 08031234567
+```
+
+The national format includes the trunk prefix (0) used for domestic dialing in Nigeria. This is how Nigerians typically write and recognize phone numbers.
+
+**Use national format for:**
+
+- Displaying numbers to Nigerian users
+- Form inputs with Nigerian audience
+- SMS display names
+- Local marketing materials
+
+```typescript
+<p>Contact us: {result.national}</p>
+```
+
+## International Format
+
+```typescript
+result.international; // +234 803 123 4567
+```
+
+The international format adds spaces for readability while keeping the `+234` prefix. It follows the ITU-T E.123 recommendation for written phone numbers.
+
+**Use international format for:**
+
+- International user interfaces
+- Business cards and letterheads
+- Customer support displays
+- Accessibility (screen readers)
+
+The spacing groups digits logically: country code, prefix, and subscriber number segments.
+
+## Compact Format
+
+```typescript
+result.compact; // 2348031234567
+```
+
+The compact format omits the `+` sign but includes the country code. This format is used by many Nigerian payment and fintech APIs.
+
+**Use compact format for:**
+
+- Paystack API
+- Flutterwave API
+- Nigerian banking APIs
+- SMS gateway providers that don't accept `+`
+
+```typescript
+await paystack.charge.create({
+  email: "user@example.com",
+  amount: 100000,
+  phone: result.compact,
+});
+```
+
+## RFC 3966 Format
+
+```typescript
+result.rfc3966; // tel:+2348031234567
+```
+
+The RFC 3966 format is a URI scheme for telephone numbers, defined in [RFC 3966](https://datatracker.ietf.org/doc/html/rfc3966). It enables click-to-call functionality in web applications.
+
+**Use RFC 3966 for:**
+
+- Click-to-call `<a href>` links
+- Contact cards and vCards
+- QR codes for phone numbers
+- Mobile deep linking to phone app
+- Schema.org telephone markup
+
+```html
+<a href="{result.rfc3966}"> Call {result.national} </a>
+```
+
+The browser or mobile OS recognizes the `tel:` scheme and opens the default phone application.
+
+## Choosing the Right Format
+
+| Scenario                       | Recommended Format   |
+| ------------------------------ | -------------------- |
+| Store in database              | `e164`               |
+| Display to Nigerian users      | `national`           |
+| Display to international users | `international`      |
+| Paystack/Flutterwave API       | `compact`            |
+| Twilio/Africa's Talking        | `e164`               |
+| Click-to-call links            | `rfc3966`            |
+| WhatsApp API                   | `e164`               |
+| User input normalization       | `e164` or `national` |
+
+## Format Consistency
+
+All five formats represent the exact same phone number. You can parse any format back to get the same result:
+
+```typescript
+import { parse } from "phoneng";
+
+const a = parse("08031234567");
+const b = parse("+2348031234567");
+const c = parse("2348031234567");
+const d = parse("+234 803 123 4567");
+
+// All produce identical results
+((a.e164 === b.e164) === c.e164) === d.e164;
+```
+
+This idempotent behavior means you can safely re-parse stored numbers without corruption.
+
+## Accessing Formats
+
+After a successful parse, access any format directly:
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+
+if (result.valid) {
+  const forStorage = result.e164;
+  const forDisplay = result.national;
+  const forPaystack = result.compact;
+  const forInternational = result.international;
+  const forLink = result.rfc3966;
+}
+```
+
+Type narrowing with the `valid` check is required because `parse` returns a discriminated union. See [TypeScript](/docs/typescript) for more on type-safe usage.
