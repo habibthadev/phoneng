@@ -1,6 +1,6 @@
 ---
 import LandingLayout from '../layouts/LandingLayout.astro';
-import { Playground } from '../components/playground/Playground';
+import { Playground as PlaygroundComponent } from '../components/playground/Playground';
 ---
 
 <LandingLayout
@@ -38,6 +38,6 @@ import { Playground } from '../components/playground/Playground';
         Test the phoneng parser with any Nigerian phone number. Supports national, international, E.164, and compact formats.
       </p>
     </header>
-    <Playground client:only="react" />
+    <PlaygroundComponent client:only="react" />
   </div>
 </LandingLayout>
