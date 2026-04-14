@@ -34,6 +34,11 @@
     "mobile",
     "ncc"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/habibthadev/phoneng",
+    "directory": "packages/phoneng"
+  },
   "author": "Habib Adebayo",
   "license": "MIT",
   "devDependencies": {
