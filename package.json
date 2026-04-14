@@ -1,0 +1,43 @@
+{
+  "name": "phoneng-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "scripts": {
+    "build": "pnpm --filter phoneng build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter phoneng typecheck",
+    "size": "size-limit",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "docs:preview": "pnpm --filter docs preview",
+    "prepublishOnly": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@size-limit/file": "^12.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1",
+    "size-limit": "^12.0.1",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
