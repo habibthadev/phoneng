@@ -1,0 +1,43 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import { Playground } from '../components/playground/Playground';
+---
+
+<LandingLayout
+  title="Playground"
+  description="Interactive playground for testing the phoneng Nigerian phone number parser."
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
+    <nav class="mb-10" aria-label="Breadcrumb">
+      <a
+        href="/docs/getting-started"
+        class="inline-flex items-center gap-1.5 text-sm text-secondary-label hover:text-label transition-colors font-display"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        Documentation
+      </a>
+    </nav>
+    <header class="max-w-2xl mb-12">
+      <h1 class="font-display text-[clamp(28px,5vw,40px)] font-bold tracking-tight text-label mb-4">
+        Playground
+      </h1>
+      <p class="font-display text-lg text-secondary-label leading-relaxed">
+        Test the phoneng parser with any Nigerian phone number. Supports national, international, E.164, and compact formats.
+      </p>
+    </header>
+    <Playground client:only="react" />
+  </div>
+</LandingLayout>
