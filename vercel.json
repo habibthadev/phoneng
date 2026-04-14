@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm --filter phoneng build && pnpm --filter docs build",
+  "buildCommand": "pnpm --filter phoneng build && pnpm --filter docs build && find apps/docs/.vercel/output/functions -name '.vc-config.json' -exec sed -i 's/nodejs18.x/nodejs22.x/g' {} +",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "apps/docs/.vercel/output",
   "framework": null
