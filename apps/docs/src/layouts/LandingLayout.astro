@@ -1,0 +1,56 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+}
+
+const { title, description, ogImage } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} ogImage={ogImage}>
+  <div class="flex min-h-screen flex-col">
+    <Header />
+    <main class="flex-1 pt-16">
+      <slot />
+    </main>
+    <footer class="border-t border-separator/50 bg-bg-secondary">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div class="flex items-center gap-2.5">
+            <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12 19.79 19.79 0 0 1 1.93 3.28a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-label">phoneng</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-secondary-label">
+            <a href="/docs/getting-started" class="hover:text-label transition-colors">Docs</a>
+            <a href="/playground" class="hover:text-label transition-colors">Playground</a>
+            <a href="https://github.com/nicholasgriffintn/phoneng" target="_blank" rel="noopener noreferrer" class="hover:text-label transition-colors">GitHub</a>
+            <a href="https://www.npmjs.com/package/phoneng" target="_blank" rel="noopener noreferrer" class="hover:text-label transition-colors">npm</a>
+          </div>
+        </div>
+        <div class="mt-8 pt-8 border-t border-separator/50 text-xs text-tertiary-label">
+          MIT License. Network data from NCC allocations.
+        </div>
+      </div>
+    </footer>
+  </div>
+</BaseLayout>
