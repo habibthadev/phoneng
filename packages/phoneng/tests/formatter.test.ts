@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/index.js';
-import { toE164, toNational, toInternational, toCompact } from '../src/formatter.js';
+import { toE164, toNational, toInternational, toCompact, toRFC3966 } from '../src/formatter.js';
 
 describe('formatter', () => {
   describe('via parse', () => {
@@ -75,6 +75,10 @@ describe('formatter', () => {
 
     it('toCompact adds country code without plus', () => {
       expect(toCompact(testDigits)).toBe('2348031234567');
+    });
+
+    it('toRFC3966 formats as tel URI', () => {
+      expect(toRFC3966(testDigits)).toBe('tel:+2348031234567');
     });
   });
 });
