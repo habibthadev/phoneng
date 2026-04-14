@@ -1,0 +1,278 @@
+---
+title: TypeScript
+description: Type-safe usage of phoneng with discriminated unions, type guards, and proper type inference.
+---
+
+phoneng is written in TypeScript and ships complete type declarations. All types are exported and can be used directly in your code.
+
+## Discriminated Unions
+
+`ParseResult` is a discriminated union that uses the `valid` property as the discriminant:
+
+```typescript
+type ParseSuccess = {
+  valid: true;
+  e164: string;
+  national: string;
+  international: string;
+  compact: string;
+  rfc3966: string;
+  prefix: string;
+  network: Network;
+  type: NumberType;
+};
+
+type ParseFailure = {
+  valid: false;
+  reason: ParseErrorCode;
+  input: string;
+};
+
+type ParseResult = ParseSuccess | ParseFailure;
+```
+
+TypeScript narrows the type automatically when you check `valid`:
+
+```typescript
+import { parse } from "phoneng";
+
+const result = parse("08031234567");
+
+if (result.valid) {
+  result.e164; // string (accessible)
+  result.network; // Network (accessible)
+} else {
+  result.reason; // ParseErrorCode (accessible)
+  result.input; // string (accessible)
+}
+```
+
+## Type Imports
+
+Import types directly from phoneng:
+
+```typescript
+import {
+  parse,
+  parseMany,
+  isValid,
+  isPossible,
+  type ParseResult,
+  type ParseSuccess,
+  type ParseFailure,
+  type BatchResult,
+  type Network,
+  type NumberType,
+  type ParseErrorCode,
+} from "phoneng";
+```
+
+## Type Guards
+
+Create a type guard to narrow to `ParseSuccess`:
+
+```typescript
+import { type ParseResult, type ParseSuccess } from "phoneng";
+
+function isParseSuccess(result: ParseResult): result is ParseSuccess {
+  return result.valid;
+}
+
+const result = parse("08031234567");
+
+if (isParseSuccess(result)) {
+  console.log(result.e164);
+}
+```
+
+## Working with Network Type
+
+The `Network` type is a union of string literals:
+
+```typescript
+import { type Network } from "phoneng";
+
+const network: Network = "MTN";
+
+function getNetworkColor(network: Network): string {
+  switch (network) {
+    case "MTN":
+      return "#ffcc00";
+    case "AIRTEL":
+      return "#e60000";
+    case "GLO":
+      return "#00a550";
+    case "NINE_MOBILE":
+      return "#006666";
+    default:
+      return "#6b7280";
+  }
+}
+```
+
+## Working with NumberType
+
+The `NumberType` discriminates between mobile, landline, and special numbers:
+
+```typescript
+import { parse, type NumberType } from "phoneng";
+
+function isMobile(result: ParseResult): boolean {
+  return result.valid && result.type === "MOBILE";
+}
+```
+
+## Exhaustive Error Handling
+
+Use TypeScript's exhaustive checking to ensure all error codes are handled:
+
+```typescript
+import { parse, type ParseErrorCode } from "phoneng";
+
+function getErrorMessage(code: ParseErrorCode): string {
+  switch (code) {
+    case "EMPTY_INPUT":
+      return "Please enter a phone number";
+    case "INVALID_CHARACTERS":
+      return "Only digits are allowed";
+    case "INVALID_LENGTH":
+      return "Invalid number length";
+    case "INVALID_COUNTRY_CODE":
+      return "Not a Nigerian number";
+    case "INVALID_PREFIX":
+      return "Unknown network prefix";
+    case "TOO_SHORT":
+      return "Number is too short";
+    case "TOO_LONG":
+      return "Number is too long";
+    case "NOT_NIGERIAN":
+      return "Must be Nigerian";
+    default:
+      const _exhaustive: never = code;
+      throw new Error(`Unhandled error code: ${_exhaustive}`);
+  }
+}
+```
+
+If a new error code is added to phoneng, TypeScript will show a compile error.
+
+## Generic Helpers
+
+Create generic functions that work with ParseResult:
+
+```typescript
+import { parse, type ParseResult, type ParseSuccess } from "phoneng";
+
+function mapSuccess<T>(
+  result: ParseResult,
+  fn: (success: ParseSuccess) => T,
+): T | null {
+  return result.valid ? fn(result) : null;
+}
+
+const e164 = mapSuccess(parse("08031234567"), (r) => r.e164);
+```
+
+## Filtering Valid Results
+
+Filter an array to only valid results with proper typing:
+
+```typescript
+import { parseMany, type ParseSuccess } from "phoneng";
+
+const batch = parseMany(["08031234567", "invalid"]);
+
+const validResults: ParseSuccess[] = batch.results.filter(
+  (r): r is ParseSuccess => r.valid,
+);
+
+validResults.forEach((r) => {
+  console.log(r.e164);
+});
+```
+
+## React Props
+
+Type component props with phoneng types:
+
+```typescript
+import { type ParseSuccess, type Network } from 'phoneng';
+
+interface PhoneDisplayProps {
+  phone: ParseSuccess;
+}
+
+function PhoneDisplay({ phone }: PhoneDisplayProps) {
+  return (
+    <div>
+      <p>{phone.national}</p>
+      <p>{phone.network}</p>
+    </div>
+  );
+}
+
+interface NetworkBadgeProps {
+  network: Network;
+}
+
+function NetworkBadge({ network }: NetworkBadgeProps) {
+  return <span className={`badge-${network.toLowerCase()}`}>{network}</span>;
+}
+```
+
+## Zod with Type Inference
+
+Infer types from Zod schemas that use phoneng:
+
+```typescript
+import { z } from "zod";
+import { parse, type ParseSuccess } from "phoneng";
+
+const phoneSchema = z.string().transform((val, ctx) => {
+  const result = parse(val);
+  if (!result.valid) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: result.reason });
+    return z.NEVER;
+  }
+  return result;
+});
+
+type PhoneData = z.infer<typeof phoneSchema>;
+
+const formSchema = z.object({
+  name: z.string(),
+  phone: phoneSchema,
+});
+
+type FormData = z.infer<typeof formSchema>;
+```
+
+## Strict Mode Compatibility
+
+phoneng is designed for TypeScript strict mode. All functions have explicit return types and no implicit any:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  }
+}
+```
+
+## Module Resolution
+
+For best results, use `moduleResolution: "bundler"` or `"node16"`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ES2022"
+  }
+}
+```
+
+This ensures proper resolution of phoneng's ESM exports.
