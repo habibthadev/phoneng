@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/index.js';
-import { toE164, toNational, toInternational, toCompact, toRFC3966 } from '../src/formatter.js';
+import {
+  toE164,
+  toNational,
+  toInternational,
+  toCompact,
+  toRFC3966,
+} from '../src/formatter.js';
 
 describe('formatter', () => {
   describe('via parse', () => {
